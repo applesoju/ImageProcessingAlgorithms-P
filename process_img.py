@@ -1,7 +1,7 @@
 import os
 
 
-def get_images_path_list(dir_path):
+def get_images_path_list(dir_path) -> []:
     output_list = []
     category_dirs = os.listdir(dir_path)
 
