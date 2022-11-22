@@ -74,6 +74,7 @@ class ImageDataset:
         random_img = self.image_list[random_index]
         random_img.show_histogram(scale)
 
+    # Shows histograms of random images from each category
     def show_hist_from_each_cat(self, scale) -> None:
         cat_count = len(self.categories)
         layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
@@ -101,6 +102,7 @@ class ImageDataset:
 
         plt.show()
 
+    # Computes mean histograms of images from each category
     def compute_mean_hist(self) -> None:
         mean_histograms = []
 
@@ -127,6 +129,7 @@ class ImageDataset:
 
         self.mean_histograms = mean_histograms
 
+    # Shows mean histograms of images from each category
     def show_mean_histograms(self, scale):
         cat_count = len(self.categories)
         layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
@@ -146,6 +149,7 @@ class ImageDataset:
 
         plt.show()
 
+    # Shows Fourier Transform of random images from each category
     def show_fft_from_each_cat(self):
         cat_count = len(self.categories)
         layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
@@ -165,8 +169,6 @@ class ImageDataset:
 
             plt.subplot(layout[0], layout[1], i + 1)
             plt.imshow(fft)
-            plt.xlabel('Pixel value')
-            plt.ylabel('Pixel count')
             plt.title(f'Name = {random_img.name}, Category = {random_img.category}')
 
         plt.show()

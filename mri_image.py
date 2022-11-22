@@ -47,11 +47,13 @@ class MriImage:
         plt.yscale(scale)
         plt.show()
 
+    # Creates a Fourier transform of the image
     def create_fft(self) -> None:
         fourier = np.fft.fft2(self.image)
         fshift = np.fft.fftshift(fourier)
         self.fft = 20 * np.log(np.abs(fshift))
 
+    # Displays the Fourier Transform of the image
     def show_fft(self) -> None:
         plt.imshow(self.fft)
         plt.show()
