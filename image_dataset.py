@@ -50,8 +50,6 @@ class ImageDataset:
 
             plt.subplot(layout[0], layout[1], i + 1)
             plt.imshow(img.image)
-            plt.xlabel('Pixel value')
-            plt.ylabel('Pixel count')
             plt.title(f'Name = {img.name}, Category = {img.category}')
 
         plt.show()
