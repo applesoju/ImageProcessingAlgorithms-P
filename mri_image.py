@@ -1,14 +1,15 @@
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class MriImage:
     # Represents an MRI image
 
-    histogram = None
-    fft = None
-
     def __init__(self, name, category, file_path) -> None:
+        self.histogram = None
+        self.fft = None
+
         self.name = name
         self.category = category
         self.image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
@@ -44,4 +45,13 @@ class MriImage:
         plt.title(f'Name = {self.name}, Category = {self.category}')
         plt.grid()
         plt.yscale(scale)
+        plt.show()
+
+    def create_fft(self) -> None:
+        fourier = np.fft.fft2(self.image)
+        fshift = np.fft.fftshift(fourier)
+        self.fft = 20 * np.log(np.abs(fshift))
+
+    def show_fft(self) -> None:
+        plt.imshow(self.fft)
         plt.show()
