@@ -84,18 +84,18 @@ class ImageDataset:
 
         random_indexes = [random.randint(0, len(cat)) for cat in images_by_categories]
         for i, idx in enumerate(random_indexes):
-            img = images_by_categories[i][idx]
-            hist = cv2.calcHist([img.image],
-                                [0],
-                                None,
-                                [256],
-                                [0, 256])
+            random_img = images_by_categories[i][idx]
+
+            if random_img.histogram is None:
+                random_img.create_histogram()
+
+            hist = random_img.histogram
 
             plt.subplot(layout[0], layout[1], i + 1)
             plt.plot(hist, color='black')
             plt.xlabel('Pixel value')
             plt.ylabel('Pixel count')
-            plt.title(f'Name = {img.name}, Category = {img.category}')
+            plt.title(f'Name = {random_img.name}, Category = {random_img.category}')
             plt.grid()
             plt.yscale(scale)
 
@@ -146,3 +146,27 @@ class ImageDataset:
 
         plt.show()
 
+    def show_fft_from_each_cat(self):
+        cat_count = len(self.categories)
+        layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
+
+        images_by_categories = [
+            [img for img in self.image_list if img.category == category] for category in self.categories
+        ]
+
+        random_indexes = [random.randint(0, len(cat)) for cat in images_by_categories]
+        for i, idx in enumerate(random_indexes):
+            random_img = images_by_categories[i][idx]
+
+            if random_img.fft is None:
+                random_img.create_fft()
+
+            fft = images_by_categories[i][idx].fft
+
+            plt.subplot(layout[0], layout[1], i + 1)
+            plt.imshow(fft)
+            plt.xlabel('Pixel value')
+            plt.ylabel('Pixel count')
+            plt.title(f'Name = {random_img.name}, Category = {random_img.category}')
+
+        plt.show()

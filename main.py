@@ -11,4 +11,4 @@ if __name__ == '__main__':
     # mri_images_dataset.show_image_from_each_cat()
     # mri_images_dataset.show_hist_from_each_cat(scale='log')
     # mri_images_dataset.show_mean_histograms(scale='log')
-    mri_images_dataset.image_list[0].create_fft()
+    mri_images_dataset.show_fft_from_each_cat()
