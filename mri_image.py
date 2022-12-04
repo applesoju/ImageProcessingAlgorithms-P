@@ -1,6 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from skimage import feature
 
 
 class MriImage:
@@ -9,6 +10,10 @@ class MriImage:
     def __init__(self, name, category, file_path) -> None:
         self.histogram = None
         self.fft = None
+
+        self.lbp = None
+        self.glcm = None
+        self.zernike = None
 
         self.name = name
         self.category = category
@@ -57,3 +62,15 @@ class MriImage:
     def show_fft(self) -> None:
         plt.imshow(self.fft)
         plt.show()
+
+    # Creates a Local Binary Pattern descriptor of the image
+    def create_lbp(self, radius, n_points) -> None:
+        lbp = feature.local_binary_pattern(self.image, n_points, radius, method='uniform')
+        (hist, _) = np.histogram(lbp.ravel(),
+                                 bins=np.arange(0, n_points + 3),
+                                 range=(0, n_points + 2))
+        hist = hist.astype('float')
+        hist /= (hist.sum() + 1e-7)
+        plt.hist(lbp.ravel(), bins=n_points + 3, range=(0, n_points + 2))
+        plt.show()
+        self.lbp = None

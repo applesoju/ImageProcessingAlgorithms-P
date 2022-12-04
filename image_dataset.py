@@ -15,6 +15,7 @@ class ImageDataset:
         self.image_list = []
         self.categories = []
         self.mean_histograms = []
+        self.fft_from_mean_hist = []
 
     # Load images from given path to the dataset
     def load_images(self, dir_path) -> None:
@@ -128,7 +129,7 @@ class ImageDataset:
         self.mean_histograms = mean_histograms
 
     # Shows mean histograms of images from each category
-    def show_mean_histograms(self, scale):
+    def show_mean_histograms(self) -> None:
         cat_count = len(self.categories)
         layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
 
@@ -143,12 +144,13 @@ class ImageDataset:
             plt.ylabel('Pixel count')
             plt.title(f'Mean Histogram, Category = {self.categories[i]}')
             plt.grid()
-            plt.yscale(scale)
+            plt.ylim([0, 175])
+            # plt.yscale(scale)
 
         plt.show()
 
     # Shows Fourier Transform of random images from each category
-    def show_fft_from_each_cat(self):
+    def show_fft_from_each_cat(self) -> None:
         cat_count = len(self.categories)
         layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
 
@@ -170,3 +172,35 @@ class ImageDataset:
             plt.title(f'Name = {random_img.name}, Category = {random_img.category}')
 
         plt.show()
+
+    # Compute Fourier Transforms of mean histograms
+    def compute_fft_from_mean_hist(self) -> None:
+        generated_ffts = []
+
+        if not self.mean_histograms:
+            self.compute_mean_hist()
+
+        for mh in self.mean_histograms:
+            fourier = np.fft.fft(mh)
+            generated_ffts.append(fourier)
+
+        self.fft_from_mean_hist = generated_ffts
+
+    # Show Fourier Transforms of mean histograms
+    # def show_fft_from_mean_hist(self, scale) -> None:
+    #     cat_count = len(self.categories)
+    #     layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
+    #
+    #     if not self.mean_histograms:
+    #         self.compute_fft_from_mean_hist()
+    #
+    #     for i, fft in enumerate(self.fft_from_mean_hist):
+    #         freq = np.fft.fftfreq(t.shape[-1])
+    #
+    #         plt.subplot(layout[0], layout[1], i + 1)
+    #         plt.yscale(scale)
+    #         plt.plot(freq, fft.real)
+    #         plt.plot(freq, fft.imag)
+    #         plt.title(f'FFT of Mean histogram, Category = {self.categories[i]}')
+    #
+    #     plt.show()
