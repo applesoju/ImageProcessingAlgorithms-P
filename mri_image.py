@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage import feature
+from lbp import LBP
 
 
 class MriImage:
@@ -64,13 +65,13 @@ class MriImage:
         plt.show()
 
     # Creates a Local Binary Pattern descriptor of the image
-    def create_lbp(self, radius, n_points) -> None:
-        lbp = feature.local_binary_pattern(self.image, n_points, radius, method='uniform')
-        (hist, _) = np.histogram(lbp.ravel(),
-                                 bins=np.arange(0, n_points + 3),
-                                 range=(0, n_points + 2))
-        hist = hist.astype('float')
-        hist /= (hist.sum() + 1e-7)
-        plt.hist(lbp.ravel(), bins=n_points + 3, range=(0, n_points + 2))
-        plt.show()
-        self.lbp = None
+    def create_lbp(self, radius, n_points, method) -> None:
+        self.lbp = LBP(self.image, radius, n_points, method)
+
+    # Displays a Local Binary Pattern descriptor as an image
+    def show_lbp_image(self) -> None:
+        self.lbp.show()
+
+    # Displays a Local Binary Pattern descriptor as a histogram
+    def show_lbp_hist(self) -> None:
+        self.lbp.show_hist()

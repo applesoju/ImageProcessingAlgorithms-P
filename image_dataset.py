@@ -186,21 +186,7 @@ class ImageDataset:
 
         self.fft_from_mean_hist = generated_ffts
 
-    # Show Fourier Transforms of mean histograms
-    # def show_fft_from_mean_hist(self, scale) -> None:
-    #     cat_count = len(self.categories)
-    #     layout = (cat_count // 2, 2) if cat_count % 2 == 0 else (cat_count, 1)
-    #
-    #     if not self.mean_histograms:
-    #         self.compute_fft_from_mean_hist()
-    #
-    #     for i, fft in enumerate(self.fft_from_mean_hist):
-    #         freq = np.fft.fftfreq(t.shape[-1])
-    #
-    #         plt.subplot(layout[0], layout[1], i + 1)
-    #         plt.yscale(scale)
-    #         plt.plot(freq, fft.real)
-    #         plt.plot(freq, fft.imag)
-    #         plt.title(f'FFT of Mean histogram, Category = {self.categories[i]}')
-    #
-    #     plt.show()
+    # Generate LBP of all images using given parameters
+    def generate_lbps(self, radius, n_points, method) -> None:
+        for img in self.image_list:
+            img.create_lbp(radius, n_points, method)
