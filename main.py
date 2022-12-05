@@ -18,3 +18,4 @@ if __name__ == '__main__':
     # mri_images_dataset.show_fft_from_each_cat()
     # mri_images_dataset.show_fft_from_mean_hist(scale='log')
     # mri_images_dataset.generate_lbps(3, 24, 'uniform')
+    mri_images_dataset.generate_zernike_moments(5)

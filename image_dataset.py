@@ -190,3 +190,8 @@ class ImageDataset:
     def generate_lbps(self, radius, n_points, method) -> None:
         for img in self.image_list:
             img.create_lbp(radius, n_points, method)
+
+    # Generate Zernike Moments of all images
+    def generate_zernike_moments(self, radius) -> None:
+        for img in self.image_list:
+            img.create_zernike_moments(radius)

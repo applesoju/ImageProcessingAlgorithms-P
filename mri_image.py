@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from skimage import feature
 from lbp import LBP
+import mahotas
 
 
 class MriImage:
@@ -75,3 +76,7 @@ class MriImage:
     # Displays a Local Binary Pattern descriptor as a histogram
     def show_lbp_hist(self) -> None:
         self.lbp.show_hist()
+
+    # Creates a Zernike Moments of the image
+    def create_zernike_moments(self, radius):
+        self.zernike = mahotas.features.zernike_moments(self.image, radius)
