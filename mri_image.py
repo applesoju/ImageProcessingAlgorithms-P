@@ -1,9 +1,11 @@
 import cv2
+import mahotas
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage import feature
+
 from lbp import LBP
-import mahotas
+from skimage import feature
+import pandas as pd
 
 
 class MriImage:
@@ -80,3 +82,21 @@ class MriImage:
     # Creates a Zernike Moments of the image
     def create_zernike_moments(self, radius):
         self.zernike = mahotas.features.zernike_moments(self.image, radius)
+
+    def calculate_glcm(self, dist, angles, levels, sym, norm):
+        props = ['dissimilarity', 'correlation', 'homogeneity', 'contrast', 'ASM', 'energy']
+        angles_in_deg = np.degrees(angles)
+        columns = [
+            f'{prop}_{int(angle)}' for prop in props for angle in angles_in_deg
+        ]
+
+        glcm = feature.graycomatrix(
+            self.image,
+            dist,
+            angles,
+            levels,
+            sym,
+            norm
+        )
+        glcm_props = [propery for name in props for propery in feature.graycoprops(glcm, name)[0]]
+        self.glcm = pd.DataFrame([glcm_props], columns=columns)

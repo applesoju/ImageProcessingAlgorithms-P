@@ -1,6 +1,5 @@
 import random
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -137,7 +136,6 @@ class ImageDataset:
             self.compute_mean_hist()
 
         for i, mean_hist in enumerate(self.mean_histograms):
-
             plt.subplot(layout[0], layout[1], i + 1)
             plt.plot(mean_hist, color='black')
             plt.xlabel('Pixel value')
@@ -195,3 +193,9 @@ class ImageDataset:
     def generate_zernike_moments(self, radius) -> None:
         for img in self.image_list:
             img.create_zernike_moments(radius)
+
+    # Generate Gray Level Co-occurance Matrices for all images
+    def generate_glcm(self, distances, angles, levels=256, symmetric=True, normed=True) -> None:
+        for img in self.image_list:
+            print(img.name)
+            img.calculate_glcm(distances, angles, levels, symmetric, normed)
