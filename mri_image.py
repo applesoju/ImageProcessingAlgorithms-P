@@ -100,3 +100,28 @@ class MriImage:
         )
         glcm_props = [propery for name in props for propery in feature.graycoprops(glcm, name)[0]]
         self.glcm = pd.DataFrame([glcm_props], columns=columns)
+
+    def save_image_with_attributes(self, path) -> None:
+        cv2.imwrite(f'{path}/orig_{self.name}', self.image)
+        cv2.imwrite(f'{path}/fft_{self.name}', self.fft)
+        cv2.imwrite(f'{path}/lbp-image_{self.name}', self.lbp.lbp)
+
+        n_bins = int(self.lbp.lbp.max() + 1)
+        plt.hist(self.lbp.hist,
+                 bins=n_bins,
+                 range=(0, n_bins),
+                 edgecolor='black')
+        plt.savefig(f'{path}/lbp-hist_{self.name}')
+        plt.clf()
+
+        plt.plot(self.histogram, color='black')
+        plt.savefig(f'{path}/hist_{self.name}')
+        plt.clf()
+
+        zernike_name = f'{path}/zernike_{self.name}'[:-4] + '.txt'
+        with open(zernike_name, 'w') as output:
+            for i in self.zernike:
+                output.write(f'{i}\n')
+
+        glcm_name = f'{path}/glcm_{self.name}'[:-4] + '.csv'
+        self.glcm.to_csv(glcm_name)
