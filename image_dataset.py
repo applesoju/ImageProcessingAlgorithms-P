@@ -51,7 +51,6 @@ class ImageDataset:
     # Generate Gray Level Co-occurance Matrices for all images
     def generate_glcm(self, distances, angles, levels=256, symmetric=True, normed=True) -> None:
         for img in self.image_list:
-            print(img.name)
             img.calculate_glcm(distances, angles, levels, symmetric, normed)
 
     # Call all methods with default values
@@ -71,11 +70,11 @@ class ImageDataset:
             self.generate_glcm([5],
                                [0, np.pi / 4, np.pi / 2, np.pi * 3 / 4])
 
-        if sample_image.zernike:
+        if sample_image.zernike is None:
             self.generate_zernike_moments(5)
 
     def save_dataset(self, path_to_dir):
-        # self.generate_defauts()
+        self.generate_defauts()
 
         cats = self.categories
 
@@ -97,4 +96,3 @@ class ImageDataset:
                     os.makedirs(img_path)
 
                 img.save_image_with_attributes(img_path)
-                return
