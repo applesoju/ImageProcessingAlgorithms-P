@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 
 import process_img as pimg
 from mri_image import MriImage
@@ -54,14 +55,8 @@ class ImageDataset:
             img.calculate_glcm(distances, angles, levels, symmetric, normed)
 
     # Call all methods with default values
-    def generate_defauts(self) -> None:
+    def generate_features(self) -> None:
         sample_image = self.image_list[-1]
-
-        if sample_image.histogram is None:
-            self.generate_histograms()
-
-        if sample_image.fft is None:
-            self.generate_ffts()
 
         if sample_image.lbp is None:
             self.generate_lbps(3, 24, 'uniform')
@@ -74,7 +69,7 @@ class ImageDataset:
             self.generate_zernike_moments(5)
 
     def save_dataset(self, path_to_dir):
-        self.generate_defauts()
+        self.generate_features()
 
         cats = self.categories
 
@@ -84,15 +79,8 @@ class ImageDataset:
         for cat in cats:
             cat_path = f'{path_to_dir}/{cat}'
 
-            if not path.exists(cat_path):
-                os.makedirs(cat_path)
+            features = [img.get_all_features() for img in self.image_list if img.category == cat]
+            cat_df = pd.concat(features)
 
-            imgs = [img for img in self.image_list if img.category == cat]
-
-            for img in imgs:
-                img_path = f'{path_to_dir}/{cat}/{img.name}'
-
-                if not path.exists(img_path):
-                    os.makedirs(img_path)
-
-                img.save_image_with_attributes(img_path)
+            file_name = f'{cat_path}.csv'
+            cat_df.to_csv(file_name)

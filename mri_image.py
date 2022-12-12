@@ -69,7 +69,7 @@ class MriImage:
 
     # Creates a Local Binary Pattern descriptor of the image
     def create_lbp(self, radius, n_points, method) -> None:
-        self.lbp = LBP(self.image, radius, n_points, method)
+        self.lbp = LBP(self.image, radius, n_points, method, self.name)
 
     # Displays a Local Binary Pattern descriptor as an image
     def show_lbp_image(self) -> None:
@@ -81,7 +81,12 @@ class MriImage:
 
     # Creates a Zernike Moments of the image
     def create_zernike_moments(self, radius):
-        self.zernike = mahotas.features.zernike_moments(self.image, radius)
+        zernike = mahotas.features.zernike_moments(self.image, radius)
+
+        column_names = [f'zernike_{i:03d}' for i in range(len(zernike))]
+        self.zernike = pd.DataFrame(data=[zernike],
+                                    index=[self.name],
+                                    columns=column_names)
 
     def calculate_glcm(self, dist, angles, levels, sym, norm):
         props = ['dissimilarity', 'correlation', 'homogeneity', 'contrast', 'ASM', 'energy']
@@ -99,29 +104,8 @@ class MriImage:
             norm
         )
         glcm_props = [propery for name in props for propery in feature.graycoprops(glcm, name)[0]]
-        self.glcm = pd.DataFrame([glcm_props], columns=columns)
+        self.glcm = pd.DataFrame([glcm_props], columns=columns, index=[self.name])
 
-    def save_image_with_attributes(self, path) -> None:
-        cv2.imwrite(f'{path}/orig_{self.name}', self.image)
-        cv2.imwrite(f'{path}/fft_{self.name}', self.fft)
-        cv2.imwrite(f'{path}/lbp-image_{self.name}', self.lbp.lbp)
-
-        n_bins = int(self.lbp.lbp.max() + 1)
-        plt.hist(self.lbp.hist,
-                 bins=n_bins,
-                 range=(0, n_bins),
-                 edgecolor='black')
-        plt.savefig(f'{path}/lbp-hist_{self.name}')
-        plt.clf()
-
-        plt.plot(self.histogram, color='black')
-        plt.savefig(f'{path}/hist_{self.name}')
-        plt.clf()
-
-        zernike_name = f'{path}/zernike_{self.name}'[:-4] + '.txt'
-        with open(zernike_name, 'w') as output:
-            for i in self.zernike:
-                output.write(f'{i}\n')
-
-        glcm_name = f'{path}/glcm_{self.name}'[:-4] + '.csv'
-        self.glcm.to_csv(glcm_name)
+    def get_all_features(self) -> None:
+        feature_df = self.lbp.df.join(self.zernike).join(self.glcm)
+        return feature_df
