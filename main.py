@@ -15,7 +15,11 @@ if __name__ == '__main__':
     # mri_images_dataset.load_images(RESOURCE_DIR_NAME)
     # mri_images_dataset.save_dataset('processed')
 
-    mdf = MriDataFrame('processed/ModerateDemented.csv')
-    # mdf.print()
+    moderate = MriDataFrame('processed/ModerateDemented.csv')
+    # moderate.print()
+    fig, axs = plt.subplots()
 
-    print(len(mdf.features))
+    moderate.plot(axs, 1)
+    moderate.plot(axs, 2)
+    
+    plt.show()

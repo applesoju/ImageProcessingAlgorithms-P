@@ -1,4 +1,7 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sn
 
 class MriDataFrame:
     def __init__(self, file_path):
@@ -12,6 +15,3 @@ class MriDataFrame:
         print(f'Features: {self.features}')
         print(f'Data:')
         print(self.df)
-
-    def plot(self, feature_range):
-        raise NotImplementedError
