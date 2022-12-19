@@ -91,7 +91,7 @@ class MriImage:
     def calculate_glcm(self, dist, angles, levels, sym, norm):
         props = ['dissimilarity', 'correlation', 'homogeneity', 'contrast', 'ASM', 'energy']
         angles_in_deg = np.degrees(angles)
-        columns = ['file_name'] + [
+        columns = [
             f'{prop}_{int(angle)}' for prop in props for angle in angles_in_deg
         ]
 
