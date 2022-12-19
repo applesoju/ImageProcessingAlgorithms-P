@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sn
 
+
 class MriDataFrame:
     def __init__(self, file_path):
         self.category = file_path.split(sep='/')[-1].split(sep='.')[0]
