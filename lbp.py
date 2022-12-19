@@ -23,14 +23,6 @@ class LBP:
                                index=[index],
                                columns=column_names)
 
-    def show_hist(self) -> None:
-        n_bins = int(self.lbp.max() + 1)
-        plt.hist(self.hist,
-                 bins=n_bins,
-                 range=(0, n_bins),
-                 edgecolor='black')
-        plt.show()
-
     def show(self) -> None:
         plt.imshow(self.lbp)
         plt.colorbar()
