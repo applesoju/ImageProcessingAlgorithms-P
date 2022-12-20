@@ -1,8 +1,12 @@
+import math
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sn
 import os
 import subprocess
+
+import image_dataset
 
 
 def save_distributions_of_feature(class_dict, feature, fig_path):
@@ -25,5 +29,17 @@ def save_dist_of_all_features(class_dict, dir_path):
     features = next(iter(class_dict.values())).features
 
     for f in features[1:]:
-        figure_path = f'{dir_path}/{f}.png'
+        fp = image_dataset.FEATURES_PARAMS
+
+        dir_for_figs = f"{fp['lbp'][0]}-{fp['lbp'][1]}-{fp['lbp'][2]}_" \
+                       f"{fp['zm'][0]}_" \
+                       f"{int(fp['glcm'][0][0])}-" \
+                       f"{int(math.degrees(fp['glcm'][1][0]))}-{int(math.degrees(fp['glcm'][1][1]))}-" \
+                       f"{int(math.degrees(fp['glcm'][1][2]))}-{int(math.degrees(fp['glcm'][1][3]))}"
+
+        fig_dir_path = f'{dir_path}\\{dir_for_figs}'
+        if not os.path.exists(fig_dir_path):
+            subprocess.call(['mkdir', fig_dir_path], shell=True)
+
+        figure_path = f'{fig_dir_path}/{f}.png'
         save_distributions_of_feature(class_dict, f, figure_path)

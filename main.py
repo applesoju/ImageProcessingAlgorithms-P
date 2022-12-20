@@ -27,6 +27,5 @@ if __name__ == '__main__':
                  'Moderate': moderate}
 
     # dfp.plot_distributions_of_feature(class_dfs, 1)
-    dfp.save_dist_of_all_features(class_dfs, 'feature_distributions')
-    #df = sn.load_dataset('tips')
-    #print(df)
+    # dfp.save_dist_of_all_features(class_dfs, 'feature_distributions')
+

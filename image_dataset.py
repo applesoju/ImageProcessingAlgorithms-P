@@ -8,6 +8,11 @@ from mri_image import MriImage
 
 from os import path
 
+FEATURES_PARAMS = {
+    'lbp': [2, 4, 'uniform'],
+    'zm': [2],
+    'glcm': [[2], [0, np.pi / 4, np.pi / 2, np.pi * 3 / 4]]
+}
 
 class ImageDataset:
     # Represents a dataset that contains some images
@@ -59,14 +64,16 @@ class ImageDataset:
         sample_image = self.image_list[-1]
 
         if sample_image.lbp is None:
-            self.generate_lbps(3, 24, 'uniform')
+            self.generate_lbps(FEATURES_PARAMS['lbp'][0],
+                               FEATURES_PARAMS['lbp'][1],
+                               FEATURES_PARAMS['lbp'][2])
 
         if sample_image.glcm is None:
-            self.generate_glcm([5],
-                               [0, np.pi / 4, np.pi / 2, np.pi * 3 / 4])
+            self.generate_glcm(FEATURES_PARAMS['glcm'][0],
+                               FEATURES_PARAMS['glcm'][1])
 
         if sample_image.zernike is None:
-            self.generate_zernike_moments(5)
+            self.generate_zernike_moments(FEATURES_PARAMS['zm'][0])
 
     def save_dataset(self, path_to_dir):
         self.generate_features()
