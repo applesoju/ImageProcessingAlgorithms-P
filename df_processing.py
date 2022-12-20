@@ -9,6 +9,11 @@ import numpy as np
 
 import image_dataset
 
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import f_classif
+
 
 def save_distributions_of_feature(class_dict, feature, fig_path):
     class_feature_df = pd.DataFrame()
@@ -58,5 +63,21 @@ def get_xy_arrays_from_dfs(dfs):
 
     return np.array(feature_list), np.array(class_list)
 
-def get_best_features(x, y, n_features):
-    raise NotImplementedError
+def get_best_features(x, y, n_features, feature_list):
+    x_chi = SelectKBest(chi2, k=n_features).fit_transform(x, y)
+    x_mic = SelectKBest(mutual_info_classif, k=n_features).fit_transform(x, y)
+    x_fc = SelectKBest(f_classif, k=n_features).fit_transform(x, y)
+
+    chosen_features = [[], [], []]
+
+    for i in range(n_features):
+        chi_idx = x[0].tolist().index(x_chi[0][i])
+        chosen_features[0].append(feature_list[chi_idx])
+
+        mic_idx = x[0].tolist().index(x_mic[0][i])
+        chosen_features[1].append(feature_list[mic_idx])
+
+        fc_idx = x[0].tolist().index(x_fc[0][i])
+        chosen_features[2].append(feature_list[fc_idx])
+
+    return chosen_features

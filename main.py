@@ -5,10 +5,6 @@ import df_processing as dfp
 from image_dataset import ImageDataset
 import seaborn as sn
 from sklearn.datasets import load_iris
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
-from sklearn.feature_selection import mutual_info_classif
-from sklearn.feature_selection import f_classif
 
 import os
 
@@ -31,25 +27,9 @@ if __name__ == '__main__':
                  'MildDemented': mild,
                  'ModerateDemented': moderate}
 
-    x, y = dfp.get_xy_arrays_from_dfs(class_dfs)
-    x_chi = SelectKBest(chi2, k=10).fit_transform(x, y)
-    x_mic = SelectKBest(mutual_info_classif, k=10).fit_transform(x, y)
-    x_fc = SelectKBest(f_classif, k=10).fit_transform(x, y)
+    x, y = dfp.get_xy_arrays_from_df0s(class_dfs)
+    best_features = dfp.get_best_features(x, y, 10, non.features[1:])
 
-    idx_list = []
-    for xn in x_chi[0]:
-        idx = x[0].tolist().index(xn)
-        idx_list.append(idx)
-    print(idx_list)
-
-    idx_list = []
-    for xn in x_mic[0]:
-        idx = x[0].tolist().index(xn)
-        idx_list.append(idx)
-    print(idx_list)
-
-    idx_list = []
-    for xn in x_fc[0]:
-        idx = x[0].tolist().index(xn)
-        idx_list.append(idx)
-    print(idx_list)
+    print(f'Features chosen by chi2: {best_features[0]}\n'
+          f'Features chosen by mutual_info_classif: {best_features[1]}\n'
+          f'Features chosen by f_classif: {best_features[2]}')
