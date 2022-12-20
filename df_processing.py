@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sn
 import os
 import subprocess
+import numpy as np
 
 import image_dataset
 
@@ -43,3 +44,19 @@ def save_dist_of_all_features(class_dict, dir_path):
 
         figure_path = f'{fig_dir_path}/{f}.png'
         save_distributions_of_feature(class_dict, f, figure_path)
+
+
+def get_xy_arrays_from_dfs(dfs):
+    feature_list = []
+    class_list = []
+
+    for key in dfs:
+        features, classes = dfs[key].get_as_list(list(dfs.keys()))
+
+        feature_list += features
+        class_list += classes
+
+    return np.array(feature_list), np.array(class_list)
+
+def get_best_features(x, y, n_features):
+    raise NotImplementedError
