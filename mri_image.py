@@ -2,10 +2,10 @@ import cv2
 import mahotas
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from skimage import feature
 
 from lbp import LBP
-from skimage import feature
-import pandas as pd
 
 
 class MriImage:

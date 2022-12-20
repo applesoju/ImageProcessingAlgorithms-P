@@ -1,4 +1,5 @@
 import os
+from os import path
 
 import numpy as np
 import pandas as pd
@@ -6,13 +7,12 @@ import pandas as pd
 import process_img as pimg
 from mri_image import MriImage
 
-from os import path
-
 FEATURES_PARAMS = {
     'lbp': [2, 4, 'uniform'],
     'zm': [2],
     'glcm': [[2], [0, np.pi / 4, np.pi / 2, np.pi * 3 / 4]]
 }
+
 
 class ImageDataset:
     # Represents a dataset that contains some images

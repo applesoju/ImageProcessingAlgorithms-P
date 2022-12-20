@@ -1,18 +1,17 @@
 import math
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sn
 import os
 import subprocess
+
+import matplotlib.pyplot as plt
 import numpy as np
-
-import image_dataset
-
+import pandas as pd
+import seaborn as sn
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
-from sklearn.feature_selection import mutual_info_classif
 from sklearn.feature_selection import f_classif
+from sklearn.feature_selection import mutual_info_classif
+
+import image_dataset
 
 
 def save_distributions_of_feature(class_dict, feature, fig_path):
@@ -62,6 +61,7 @@ def get_xy_arrays_from_dfs(dfs):
         class_list += classes
 
     return np.array(feature_list), np.array(class_list)
+
 
 def get_best_features(x, y, n_features, feature_list):
     x_chi = SelectKBest(chi2, k=n_features).fit_transform(x, y)

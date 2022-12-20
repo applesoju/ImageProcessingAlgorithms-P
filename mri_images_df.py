@@ -1,7 +1,5 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sn
+
 
 class MriDataFrame:
     def __init__(self, file_path):

@@ -1,12 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from mri_images_df import MriDataFrame
-import df_processing as dfp
-from image_dataset import ImageDataset
-import seaborn as sn
-from sklearn.datasets import load_iris
 
-import os
+import df_processing as dfp
+from mri_images_df import MriDataFrame
 
 RESOURCE_DIR_NAME = 'resources'
 

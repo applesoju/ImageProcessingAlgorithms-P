@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage import feature
 import pandas as pd
+from skimage import feature
 
 
 class LBP:
