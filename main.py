@@ -36,8 +36,10 @@ if __name__ == '__main__':
     for feat in best_features:
         print(feat)
 
-    norm_mri_features = dfp.normalize_df(final_df, best_features)
+    norm_arr_mri = dfp.normalize_df(final_df, best_features)
+    norm_df = pd.DataFrame(norm_arr_mri, columns=best_features)
 
+    pca_df = dfp.perform_pca(norm_arr_mri, final_df['Class'], 3)
 
 
     # środowisko orange

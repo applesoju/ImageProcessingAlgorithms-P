@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sn
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
 
 import image_dataset
 
@@ -89,9 +90,29 @@ def get_best_features(x, y, col, n_features='all'):
 
     return result_df, chosen_features
 
+
 def normalize_df(df_to_norm, columns):
     df_vals = df_to_norm.loc[:, columns].values
     norm_arr = StandardScaler().fit_transform(df_vals)
-    norm_df = pd.DataFrame(norm_arr, columns=columns)
 
-    return norm_df
+    return norm_arr
+
+
+def perform_pca(normalized_array, class_seq, n_components=2):
+    pca_mri = PCA(n_components=n_components)
+    principal_component_mri = pca_mri.fit_transform(normalized_array)
+
+    column_names = [f'princ_comp_{i + 1}' for i in range(n_components)]
+    pca_mri_df = pd.DataFrame(data=principal_component_mri, columns=column_names)
+    pca_mri_df['Class'] = class_seq.values.tolist()
+
+    print('Explained variation per principal component: {}'.format(pca_mri.explained_variance_ratio_))
+
+    if n_components == 2:
+        sn.scatterplot(x='princ_comp_1',
+                       y='princ_comp_2',
+                       hue='Class',
+                       data=pca_mri_df)
+        plt.show()
+
+    return pca_mri_df
