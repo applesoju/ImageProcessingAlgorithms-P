@@ -6,10 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sn
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
-from sklearn.feature_selection import f_classif
-from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 import image_dataset
 
@@ -63,21 +61,37 @@ def get_xy_arrays_from_dfs(dfs):
     return np.array(feature_list), np.array(class_list)
 
 
-def get_best_features(x, y, n_features, feature_list):
-    x_chi = SelectKBest(chi2, k=n_features).fit_transform(x, y)
-    x_mic = SelectKBest(mutual_info_classif, k=n_features).fit_transform(x, y)
-    x_fc = SelectKBest(f_classif, k=n_features).fit_transform(x, y)
+def get_one_dataframe(mri_dfs_to_join):
+    dfs_to_join = [mri_dfs_to_join[cat].df for cat in mri_dfs_to_join]
 
-    chosen_features = [[], [], []]
+    for df, cat in zip(dfs_to_join, mri_dfs_to_join):
+        df['Class'] = cat
 
-    for i in range(n_features):
-        chi_idx = x[0].tolist().index(x_chi[0][i])
-        chosen_features[0].append(feature_list[chi_idx])
+    final_df = pd.concat(dfs_to_join)
+    final_df = final_df.drop(['file_name'], axis=1)
 
-        mic_idx = x[0].tolist().index(x_mic[0][i])
-        chosen_features[1].append(feature_list[mic_idx])
+    label_enc = LabelEncoder()
+    final_df['Class'] = label_enc.fit_transform(final_df['Class'])
 
-        fc_idx = x[0].tolist().index(x_fc[0][i])
-        chosen_features[2].append(feature_list[fc_idx])
+    return final_df
 
-    return chosen_features
+
+def get_best_features(x, y, col, n_features='all'):
+    skb = SelectKBest(mutual_info_classif, k=n_features)
+    fit_res = skb.fit(x, y)
+
+    result_df = pd.DataFrame()
+    result_df['Feature_Name'] = fit_res.feature_names_in_
+    result_df['Score'] = fit_res.scores_
+
+    cols = skb.get_support(indices=True)
+    chosen_features = [col[i] for i in cols]
+
+    return result_df, chosen_features
+
+def normalize_df(df_to_norm, columns):
+    df_vals = df_to_norm.loc[:, columns].values
+    norm_arr = StandardScaler().fit_transform(df_vals)
+    norm_df = pd.DataFrame(norm_arr, columns=columns)
+
+    return norm_df

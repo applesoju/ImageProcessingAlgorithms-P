@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import df_processing as dfp
 from mri_images_df import MriDataFrame
+
 
 RESOURCE_DIR_NAME = 'resources'
 
@@ -22,9 +24,21 @@ if __name__ == '__main__':
                  'MildDemented': mild,
                  'ModerateDemented': moderate}
 
-    x, y = dfp.get_xy_arrays_from_df0s(class_dfs)
-    best_features = dfp.get_best_features(x, y, 10, non.features[1:])
+    # x, y = dfp.get_xy_arrays_from_dfs(class_dfs)
+    final_df = dfp.get_one_dataframe(class_dfs)
 
-    print(f'Features chosen by chi2: {best_features[0]}\n'
-          f'Features chosen by mutual_info_classif: {best_features[1]}\n'
-          f'Features chosen by f_classif: {best_features[2]}')
+    x = final_df.drop(['Class'], axis=1)
+    y = final_df['Class']
+
+    bf_df, best_features = dfp.get_best_features(x, y, non.features[1:], 20)
+
+    print('Features chosen by mutual_info_classif:')
+    for feat in best_features:
+        print(feat)
+
+    norm_mri_features = dfp.normalize_df(final_df, best_features)
+
+
+
+    # środowisko orange
+    # pca - 3 cechy
