@@ -74,7 +74,7 @@ def get_one_dataframe(mri_dfs_to_join):
     label_enc = LabelEncoder()
     final_df['Class'] = label_enc.fit_transform(final_df['Class'])
 
-    return final_df
+    return final_df, label_enc.classes_
 
 
 def get_best_features(x, y, col, n_features='all'):

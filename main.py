@@ -25,7 +25,7 @@ if __name__ == '__main__':
                  'ModerateDemented': moderate}
 
     # x, y = dfp.get_xy_arrays_from_dfs(class_dfs)
-    final_df = dfp.get_one_dataframe(class_dfs)
+    final_df, class_encoding = dfp.get_one_dataframe(class_dfs)
 
     x = final_df.drop(['Class'], axis=1)
     y = final_df['Class']
@@ -39,7 +39,8 @@ if __name__ == '__main__':
     norm_arr_mri = dfp.normalize_df(final_df, best_features)
     norm_df = pd.DataFrame(norm_arr_mri, columns=best_features)
 
-    pca_df = dfp.perform_pca(norm_arr_mri, final_df['Class'], 3)
+    class_seq = final_df['Class'].map({i: class_encoding[i] for i in range(len(class_encoding))})
+    pca_df = dfp.perform_pca(norm_arr_mri, class_seq, 3)
 
 
     # środowisko orange
