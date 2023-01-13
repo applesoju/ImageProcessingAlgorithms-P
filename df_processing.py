@@ -6,9 +6,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sn
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 import image_dataset
 
@@ -98,21 +102,57 @@ def normalize_df(df_to_norm, columns):
     return norm_arr
 
 
-def perform_pca(normalized_array, class_seq, n_components=2):
+def perform_pca(normalized_array, class_cols, n_components=2):
     pca_mri = PCA(n_components=n_components)
     principal_component_mri = pca_mri.fit_transform(normalized_array)
 
     column_names = [f'princ_comp_{i + 1}' for i in range(n_components)]
     pca_mri_df = pd.DataFrame(data=principal_component_mri, columns=column_names)
-    pca_mri_df['Class'] = class_seq.values.tolist()
+    pca_mri_df['Class_Label'] = class_cols['Class_Label'].values.tolist()
+    pca_mri_df['Class_Name'] = class_cols['Class_Name'].values.tolist()
 
     print('Explained variation per principal component: {}'.format(pca_mri.explained_variance_ratio_))
 
     if n_components == 2:
         sn.scatterplot(x='princ_comp_1',
                        y='princ_comp_2',
-                       hue='Class',
+                       hue='Class_Name',
                        data=pca_mri_df)
         plt.show()
 
     return pca_mri_df
+
+
+def multinomial_logistic_regression_cv(data_df):
+    x = data_df.drop(['Class_Label', 'Class_Name'], axis=1)
+    y = data_df['Class_Label']
+
+    model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=4, random_state=144)
+    n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
+
+    print(f'Mean accuracy from Cross Validation: {np.mean(n_scores):.3f}, {np.std(n_scores):.3f}')
+
+    return n_scores
+
+
+def multinomial_logistic_regression_random_predict(data_df, class_enc):
+    x = data_df.drop(['Class_Label', 'Class_Name'], axis=1)
+    y = data_df['Class_Label']
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=144)
+
+    model = LogisticRegression(multi_class='multinomial', solver='lbfgs')
+    model.fit(x_train, y_train)
+
+    random_idx = np.random.randint(len(x_test))
+    random_sample = x_test.iloc[random_idx, :]
+
+    pred = model.predict_proba([random_sample]).reshape(-1, 1)
+
+    print(f'Predicted probabilities:')
+    for i in range(len(class_enc)):
+        print(f'{class_enc[i]}: {pred[i]}')
+
+    print(f'Correct class: {class_enc[y_test.iloc[random_idx]]}')
+
+    return pred

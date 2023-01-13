@@ -40,7 +40,15 @@ if __name__ == '__main__':
     norm_df = pd.DataFrame(norm_arr_mri, columns=best_features)
 
     class_seq = final_df['Class'].map({i: class_encoding[i] for i in range(len(class_encoding))})
-    pca_df = dfp.perform_pca(norm_arr_mri, class_seq, 3)
+
+    class_cols = pd.DataFrame()
+    class_cols['Class_Name'] = class_seq
+    class_cols['Class_Label'] = final_df['Class']
+
+    pca_df = dfp.perform_pca(norm_arr_mri, class_cols, 3)
+
+    scores = dfp.multinomial_logistic_regression_cv(pca_df)
+    probs = dfp.multinomial_logistic_regression_random_predict(pca_df, class_encoding)
 
 
     # środowisko orange
