@@ -5,107 +5,89 @@ import numpy as np
 import pandas as pd
 from skimage import feature
 
-from lbp import LBP
-
 
 class MriImage:
     # Represents an MRI image
 
     def __init__(self, name, category, file_path) -> None:
-        self.histogram = None
-        self.fft = None
-
-        self.lbp = None
-        self.glcm = None
-        self.zernike = None
-
         self.name = name
         self.category = category
         self.image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
 
-    # Show an MRI image
-    def show_image(self) -> None:
-        # Generate a label for the image
-        label = f'Name = {self.name}, ' \
-                f'Category = {self.category}'
-
-        # Display the image
-        cv2.imshow(label, self.image)
-        cv2.waitKey(0)
-
-    # Creates a histogram of the image
-    def create_histogram(self) -> None:
-        self.histogram = cv2.calcHist(
-            [self.image],  # source image
-            [0],  # channel [0] is grayscale
-            None,  # mask
-            [256],  # size of the histogram
-            [0, 256]  # range of the histogram
-        )
-
-    # Displays the histogram of the image
-    def show_histogram(self, scale) -> None:
-        if self.histogram is None:
-            self.create_histogram()
-
-        plt.plot(self.histogram, color='black')
-        plt.xlabel('Pixel value')
-        plt.ylabel('Pixel count')
-        plt.title(f'Name = {self.name}, Category = {self.category}')
-        plt.grid()
-        plt.yscale(scale)
-        plt.show()
-
-    # Creates a Fourier transform of the image
-    def create_fft(self) -> None:
-        fourier = np.fft.fft2(self.image)
-        fshift = np.fft.fftshift(fourier)
-        self.fft = 20 * np.log(np.abs(fshift))
-
-    # Displays the Fourier Transform of the image
-    def show_fft(self) -> None:
-        plt.imshow(self.fft)
-        plt.show()
-
     # Creates a Local Binary Pattern descriptor of the image
-    def create_lbp(self, radius, n_points, method) -> None:
-        self.lbp = LBP(self.image, radius, n_points, method, self.name)
+    def generate_lbps(self, radius, n_points, method) -> pd.DataFrame:
+        if type(radius) is not list:
+            radius = [radius]
 
-    # Displays a Local Binary Pattern descriptor as an image
-    def show_lbp_image(self) -> None:
-        self.lbp.show()
+        lbps_dict = {}
 
-    # Displays a Local Binary Pattern descriptor as a histogram
-    def show_lbp_hist(self) -> None:
-        self.lbp.show_hist()
+        for r in radius:
+            lbp = feature.local_binary_pattern(self.image, n_points, r, method=method)
+            n_vals = int(lbp.max() + 1)
+
+            for val in range(n_vals):
+                val_count = np.count_nonzero(lbp == val) / lbp.size
+                column_name = f'lbp{n_points:02d}-{r:02d}{val:02d}'
+
+                lbps_dict[column_name] = val_count
+
+        lbp_df = pd.DataFrame(data=lbps_dict, index=[0])
+
+        return lbp_df
 
     # Creates a Zernike Moments of the image
-    def create_zernike_moments(self, radius):
-        zernike = mahotas.features.zernike_moments(self.image, radius)
+    def generate_zernike_moments(self, radius) -> pd.DataFrame:
+        if type(radius) is not list:
+            radius = [radius]
 
-        column_names = [f'zernike_{i:03d}' for i in range(len(zernike))]
-        self.zernike = pd.DataFrame(data=[zernike],
-                                    index=[self.name],
-                                    columns=column_names)
+        zernike_dict = {}
 
-    def calculate_glcm(self, dist, angles, levels, sym, norm):
+        r_count = 0
+        for r in radius:
+            zernike = mahotas.features.zernike_moments(self.image, r)
+            column_names = [f'zernike{r:02d}-{r_count + i:02d}' for i in range(len(zernike))]
+
+            for cn, zm in zip(column_names, zernike):
+                zernike_dict[cn] = zm
+
+            r_count += 1
+
+        zm_df = pd.DataFrame(data=zernike_dict, index=[0])
+
+        return zm_df
+
+    def generate_glcm(self, dists, angles, levels, sym, norm) -> pd.DataFrame:
+        if type(dists) is not list:
+            dists = [dists]
+
+        if type(angles) is not list:
+            angles = [angles]
+
         props = ['dissimilarity', 'correlation', 'homogeneity', 'contrast', 'ASM', 'energy']
-        angles_in_deg = np.degrees(angles)
-        columns = [
-            f'{prop}_{int(angle)}' for prop in props for angle in angles_in_deg
-        ]
 
         glcm = feature.graycomatrix(
-            self.image,
-            dist,
-            angles,
-            levels,
-            sym,
-            norm
+            image=self.image,
+            distances=dists,
+            angles=angles,
+            levels=levels,
+            symmetric=sym,
+            normed=norm
         )
-        glcm_props = [propery for name in props for propery in feature.graycoprops(glcm, name)[0]]
-        self.glcm = pd.DataFrame([glcm_props], columns=columns, index=[self.name])
 
-    def get_all_features(self) -> None:
-        feature_df = self.lbp.df.join(self.zernike).join(self.glcm)
-        return feature_df
+        glcms_dict = {}
+
+        for prop in props:
+            prop_vals = feature.graycoprops(glcm, prop)
+
+            for d, dist in enumerate(dists):
+                for a, angle in enumerate(angles):
+                    angle_deg = int(np.rad2deg(angle))
+
+                    prop_value = prop_vals[d, a]
+                    column_name = f'{prop}-{dist:02d}{angle_deg:03d}'
+
+                    glcms_dict[column_name] = prop_value
+
+        glcm_df = pd.DataFrame(data=glcms_dict, index=[0])
+
+        return glcm_df
