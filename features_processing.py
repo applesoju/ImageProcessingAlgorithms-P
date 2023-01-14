@@ -14,7 +14,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-import image_dataset
+import image_dataset_processing
 
 
 def save_distributions_of_feature(class_dict, feature, fig_path):

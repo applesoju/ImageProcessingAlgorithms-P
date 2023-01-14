@@ -42,15 +42,12 @@ class MriImage:
 
         zernike_dict = {}
 
-        r_count = 0
         for r in radius:
             zernike = mahotas.features.zernike_moments(self.image, r)
-            column_names = [f'zernike{r:02d}-{r_count + i:02d}' for i in range(len(zernike))]
+            column_names = [f'zernike{r:02d}-{i:02d}' for i in range(len(zernike))]
 
             for cn, zm in zip(column_names, zernike):
                 zernike_dict[cn] = zm
-
-            r_count += 1
 
         zm_df = pd.DataFrame(data=zernike_dict, index=[0])
 
