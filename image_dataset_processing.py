@@ -128,8 +128,7 @@ class ImageDatasetProcessing:
         if feature_df is None:
             feature_df = self.generate_features_for_dataset(LBP_PARAMS,
                                                             ZM_PARAMS,
-                                                            GLCM_PARAMS,
-                                                            verbose=verbose)
+                                                            GLCM_PARAMS)
 
         if not os.path.exists(path_to_dir):
             subprocess.call(['mkdir', path_to_dir], shell=False)
