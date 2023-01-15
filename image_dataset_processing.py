@@ -49,7 +49,7 @@ class ImageDatasetProcessing:
         lbps_list = []
 
         for c in self.images:
-            for img in self.images[c][:5]:
+            for img in self.images[c]:
                 lbp_out = img.generate_lbps(radius, n_points, method)
                 lbps_list.append(lbp_out)
 
@@ -72,7 +72,7 @@ class ImageDatasetProcessing:
         zm_list = []
 
         for c in self.images:
-            for img in self.images[c][:5]:
+            for img in self.images[c]:
                 zm_out = img.generate_zernike_moments(radius)
                 zm_list.append(zm_out)
 
@@ -96,7 +96,7 @@ class ImageDatasetProcessing:
         glcm_list = []
 
         for c in self.images:
-            for img in self.images[c][:5]:
+            for img in self.images[c]:
                 glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
                 glcm_list.append(glcm_out)
 
@@ -112,7 +112,7 @@ class ImageDatasetProcessing:
         return glcm_df
 
     def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params) -> pd.DataFrame:
-        classes = [c for c in self.images for _ in self.images[c][:5]]
+        classes = [c for c in self.images for _ in self.images[c]]
 
         lbp = self.generate_lbps(lbp_params[0],
                                  lbp_params[1],
