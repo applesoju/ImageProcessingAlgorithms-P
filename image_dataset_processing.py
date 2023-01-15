@@ -22,6 +22,9 @@ class ImageDatasetProcessing:
         self.dataset_features = None
         self.verbose = verbose
 
+        if self.verbose:
+            print('Started loading images...')
+
         class_dirs = os.listdir(dir_path)
         for cdir in class_dirs:
             self.images[cdir] = []
@@ -34,6 +37,9 @@ class ImageDatasetProcessing:
                 new_image = MriImage(name=f, category=cdir, file_path=file_path)
 
                 self.images[cdir].append(new_image)
+
+            if self.verbose:
+                print(f'Finished loading images from {cdir} class.')
 
     # Generate LBP of all images using given parameters
     def generate_lbps(self, radius, n_points, method) -> pd.DataFrame:
