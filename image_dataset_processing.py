@@ -105,7 +105,7 @@ class ImageDatasetProcessing:
 
         glcm_list = []
 
-        if input_provided is not None:
+        if input_provided is None:
             for c in self.images:
                 for img in self.images[c]:
                     glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
