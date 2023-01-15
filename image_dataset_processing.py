@@ -17,7 +17,7 @@ GLCM_PARAMS = [[1, 2, 3],
 class ImageDatasetProcessing:
     # Processing process of an image dataset
 
-    def __init__(self, dir_path, verbose=False) -> None:
+    def __init__(self, dir_path=None, verbose=False) -> None:
         self.images = {}
         self.dataset_features = None
         self.verbose = verbose
@@ -25,39 +25,45 @@ class ImageDatasetProcessing:
         if self.verbose:
             print('Started loading images...')
 
-        class_dirs = os.listdir(dir_path)
-        for cdir in class_dirs:
-            self.images[cdir] = []
+        if dir_path is not None:
+            class_dirs = os.listdir(dir_path)
 
-            class_path = f'{dir_path}/{cdir}'
-            file_list = os.listdir(class_path)
+            for cdir in class_dirs:
+                self.images[cdir] = []
 
-            for f in file_list:
-                file_path = f'{class_path}/{f}'
-                new_image = MriImage(name=f, category=cdir, file_path=file_path)
+                class_path = f'{dir_path}/{cdir}'
+                file_list = os.listdir(class_path)
 
-                self.images[cdir].append(new_image)
+                for f in file_list:
+                    file_path = f'{class_path}/{f}'
+                    new_image = MriImage(name=f, category=cdir, file_path=file_path)
 
-            if self.verbose:
-                print(f'Finished loading images from {cdir} class.')
+                    self.images[cdir].append(new_image)
+
+                if self.verbose:
+                    print(f'Finished loading images from {cdir} class.')
 
     # Generate LBP of all images using given parameters
-    def generate_lbps(self, radius, n_points, method) -> pd.DataFrame:
+    def generate_lbps(self, radius, n_points, method, input_provided=None) -> pd.DataFrame:
         if self.verbose:
             print('Generating LBPs...')
 
         lbps_list = []
 
-        for c in self.images:
-            for img in self.images[c]:
-                lbp_out = img.generate_lbps(radius, n_points, method)
-                lbps_list.append(lbp_out)
+        if input_provided is None:
+            for c in self.images:
+                for img in self.images[c]:
+                    lbp_out = img.generate_lbps(radius, n_points, method)
+                    lbps_list.append(lbp_out)
 
-            if self.verbose:
-                print(f'LBPs of class {c} finished.')
+                if self.verbose:
+                    print(f'LBPs of class {c} finished.')
 
-        lbps_df = pd.concat(lbps_list)
-        lbps_df = lbps_df.reset_index(drop=True)
+            lbps_df = pd.concat(lbps_list)
+            lbps_df = lbps_df.reset_index(drop=True)
+
+        else:
+            lbps_df = input_provided.generate_lbps(radius, n_points, method)
 
         if self.verbose:
             print('Finished generating LBPs.')
@@ -65,49 +71,57 @@ class ImageDatasetProcessing:
         return lbps_df
 
     # Generate Zernike Moments of all images
-    def generate_zernike_moments(self, radius) -> pd.DataFrame:
+    def generate_zernike_moments(self, radius, input_provided=None) -> pd.DataFrame:
         if self.verbose:
             print('Generating Zernike Moments...')
 
         zm_list = []
 
-        for c in self.images:
-            for img in self.images[c]:
-                zm_out = img.generate_zernike_moments(radius)
-                zm_list.append(zm_out)
+        if input_provided is None:
+            for c in self.images:
+                for img in self.images[c]:
+                    zm_out = img.generate_zernike_moments(radius)
+                    zm_list.append(zm_out)
+
+                if self.verbose:
+                    print(f'Zernike Moments of class {c} finished.')
+
+            zm_df = pd.concat(zm_list)
+            zm_df = zm_df.reset_index(drop=True)
 
             if self.verbose:
-                print(f'Zernike Moments of class {c} finished.')
+                print('Finished generating Zernike Moments.')
 
-        zm_df = pd.concat(zm_list)
-        zm_df = zm_df.reset_index(drop=True)
-
-        if self.verbose:
-            print('Finished generating Zernike Moments.')
+        else:
+            zm_df = input_provided.generate_zernike_moments(radius)
 
         return zm_df
 
     # Generate Gray Level Co-occurance Matrices for all images
     def generate_glcm(self, distances, angles, levels=256,
-                      symmetric=True, normed=True) -> pd.DataFrame:
+                      symmetric=True, normed=True, input_provided=None) -> pd.DataFrame:
         if self.verbose:
             print('Generating GLCMs...')
 
         glcm_list = []
 
-        for c in self.images:
-            for img in self.images[c]:
-                glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
-                glcm_list.append(glcm_out)
+        if input_provided is not None:
+            for c in self.images:
+                for img in self.images[c]:
+                    glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
+                    glcm_list.append(glcm_out)
+
+                if self.verbose:
+                    print(f'GLCM of class {c} finished.')
+
+            glcm_df = pd.concat(glcm_list)
+            glcm_df = glcm_df.reset_index(drop=True)
 
             if self.verbose:
-                print(f'GLCM of class {c} finished.')
+                print('Finished generating GLCMs.')
 
-        glcm_df = pd.concat(glcm_list)
-        glcm_df = glcm_df.reset_index(drop=True)
-
-        if self.verbose:
-            print('Finished generating GLCMs.')
+        else:
+            glcm_df = input_provided.generate_glcm(distances, angles, levels, symmetric, normed)
 
         return glcm_df
 
@@ -119,7 +133,7 @@ class ImageDatasetProcessing:
                                  lbp_params[2])
         print('---------------------------------------------------------------')
         glcm = self.generate_glcm(glcm_params[0],
-                                  glcm_params[1], )
+                                  glcm_params[1])
         print('---------------------------------------------------------------')
         zernike = self.generate_zernike_moments(zernike_params[0])
 
@@ -150,3 +164,23 @@ class ImageDatasetProcessing:
         feature_df.to_csv(path_to_file)
 
         return path_to_file
+
+    def process_image(self, img_path):
+        class_name, img_name = img_path.split('/')[-2:]
+        sample_image = MriImage(img_name, class_name, img_path)
+
+        lbp = self.generate_lbps(LBP_PARAMS[0],
+                                 LBP_PARAMS[1],
+                                 LBP_PARAMS[2],
+                                 input_provided=sample_image)
+        glcm = self.generate_glcm(GLCM_PARAMS[0],
+                                  GLCM_PARAMS[1],
+                                  input_provided=sample_image)
+        zernike = self.generate_zernike_moments(ZM_PARAMS[0],
+                                                input_provided=sample_image)
+
+        image_features = lbp.join(glcm).join(zernike)
+        image_features.insert(0, 'Class', class_name)
+
+        return image_features
+
