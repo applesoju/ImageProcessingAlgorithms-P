@@ -17,9 +17,10 @@ GLCM_PARAMS = [[1, 2, 3],
 class ImageDatasetProcessing:
     # Processing process of an image dataset
 
-    def __init__(self, dir_path) -> None:
+    def __init__(self, dir_path, verbose=False) -> None:
         self.images = {}
         self.dataset_features = None
+        self.verbose = verbose
 
         class_dirs = os.listdir(dir_path)
         for cdir in class_dirs:
@@ -35,8 +36,8 @@ class ImageDatasetProcessing:
                 self.images[cdir].append(new_image)
 
     # Generate LBP of all images using given parameters
-    def generate_lbps(self, radius, n_points, method, verbose=False) -> pd.DataFrame:
-        if verbose:
+    def generate_lbps(self, radius, n_points, method) -> pd.DataFrame:
+        if self.verbose:
             print('Generating LBPs...')
 
         lbps_list = []
@@ -46,20 +47,20 @@ class ImageDatasetProcessing:
                 lbp_out = img.generate_lbps(radius, n_points, method)
                 lbps_list.append(lbp_out)
 
-            if verbose:
+            if self.verbose:
                 print(f'LBPs of class {c} finished.')
 
         lbps_df = pd.concat(lbps_list)
         lbps_df = lbps_df.reset_index(drop=True)
 
-        if verbose:
+        if self.verbose:
             print('Finished generating LBPs.')
 
         return lbps_df
 
     # Generate Zernike Moments of all images
-    def generate_zernike_moments(self, radius, verbose=False) -> pd.DataFrame:
-        if verbose:
+    def generate_zernike_moments(self, radius) -> pd.DataFrame:
+        if self.verbose:
             print('Generating Zernike Moments...')
 
         zm_list = []
@@ -69,21 +70,21 @@ class ImageDatasetProcessing:
                 zm_out = img.generate_zernike_moments(radius)
                 zm_list.append(zm_out)
 
-            if verbose:
+            if self.verbose:
                 print(f'Zernike Moments of class {c} finished.')
 
         zm_df = pd.concat(zm_list)
         zm_df = zm_df.reset_index(drop=True)
 
-        if verbose:
+        if self.verbose:
             print('Finished generating Zernike Moments.')
 
         return zm_df
 
     # Generate Gray Level Co-occurance Matrices for all images
     def generate_glcm(self, distances, angles, levels=256,
-                      symmetric=True, normed=True, verbose=False) -> pd.DataFrame:
-        if verbose:
+                      symmetric=True, normed=True) -> pd.DataFrame:
+        if self.verbose:
             print('Generating GLCMs...')
 
         glcm_list = []
@@ -93,29 +94,29 @@ class ImageDatasetProcessing:
                 glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
                 glcm_list.append(glcm_out)
 
-            if verbose:
+            if self.verbose:
                 print(f'GLCM of class {c} finished.')
 
         glcm_df = pd.concat(glcm_list)
         glcm_df = glcm_df.reset_index(drop=True)
 
-        if verbose:
+        if self.verbose:
             print('Finished generating GLCMs.')
 
         return glcm_df
 
-    def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params, verbose=False) -> pd.DataFrame:
+    def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params) -> pd.DataFrame:
         classes = [c for c in self.images for _ in self.images[c][:5]]
 
         lbp = self.generate_lbps(lbp_params[0],
                                  lbp_params[1],
                                  lbp_params[2],
-                                 verbose=verbose)
+                                 verbose=self.verbose)
         glcm = self.generate_glcm(glcm_params[0],
                                   glcm_params[1],
-                                  verbose=verbose)
+                                  verbose=self.verbose)
         zernike = self.generate_zernike_moments(zernike_params[0],
-                                                verbose=verbose)
+                                                verbose=self.verbose)
 
         self.dataset_features = lbp.join(glcm).join(zernike)
 
@@ -124,7 +125,7 @@ class ImageDatasetProcessing:
 
         return self.dataset_features
 
-    def save_features_to_csv(self, path_to_dir, file_name, verbose=False) -> str:
+    def save_features_to_csv(self, path_to_dir, file_name) -> str:
         feature_df = self.dataset_features
 
         if feature_df is None:
