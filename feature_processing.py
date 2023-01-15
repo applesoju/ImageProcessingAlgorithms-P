@@ -1,6 +1,4 @@
-import math
 import os
-import subprocess
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,12 +12,14 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-import image_dataset_processing
-
 
 class FeatureProcessing:
 
-    def __init__(self, df_or_csv):
+    def __init__(self, df_or_csv, verbose=False):
+        self.verbose = verbose
+        self.normalized_feature_df = None
+        self.feature_scores = None
+
         if type(df_or_csv) is pd.DataFrame:
             self.features_df = df_or_csv
 
@@ -27,30 +27,55 @@ class FeatureProcessing:
             if not os.path.exists(df_or_csv):
                 raise FileNotFoundError
 
-            self.features_df = pd.read_csv(df_or_csv)
+            self.features_df = pd.read_csv(df_or_csv, index_col=0)
 
         else:
             raise TypeError
 
-def get_best_features(x, y, col, n_features='all'):
-    skb = SelectKBest(mutual_info_classif, k=n_features)
-    fit_res = skb.fit(x, y)
+    def normalize_columns(self):
+        fdf = self.features_df.drop(['Class'], axis=1)
+        self.normalized_feature_df = (fdf - fdf.mean()) / fdf.std()
+        self.normalized_feature_df.insert(0, 'Class', self.features_df['Class'])
 
-    result_df = pd.DataFrame()
-    result_df['Feature_Name'] = fit_res.feature_names_in_
-    result_df['Score'] = fit_res.scores_
+        return self.normalized_feature_df
 
-    cols = skb.get_support(indices=True)
-    chosen_features = [col[i] for i in cols]
+    def get_best_features(self, n_features='all'):
+        if self.verbose:
+            print(f'Selecting {n_features} best features from a total number of {len(self.features_df.columns)}...')
 
-    return result_df, chosen_features
+        norm_fdf = self.normalized_feature_df
+        if norm_fdf is None:
+            norm_fdf = self.normalize_columns()
 
+        label_enc = LabelEncoder()
+        class_col = norm_fdf['Class']
+        class_labels = label_enc.fit_transform(class_col)
 
-def normalize_df(df_to_norm, columns):
-    df_vals = df_to_norm.loc[:, columns].values
-    norm_arr = StandardScaler().fit_transform(df_vals)
+        model = SelectKBest(mutual_info_classif, k=n_features)
+        x = norm_fdf.drop(['Class'], axis=1)
+        y = class_labels
+        fit_res = model.fit(x, y)
 
-    return norm_arr
+        chosen_features_indices = model.get_support(indices=True).tolist()
+        chosen_features = [x.columns.values.tolist()[i] for i in chosen_features_indices]
+
+        result_df = pd.DataFrame()
+        result_df['Feature_Name'] = fit_res.feature_names_in_
+        result_df['Score'] = fit_res.scores_
+        result_df = result_df.sort_values(by=['Score'], ascending=False)
+
+        self.feature_scores = result_df
+
+        if self.verbose:
+            print('Best features and their scores:')
+
+            for feat in chosen_features:
+                row = result_df[result_df['Feature_Name'] == feat]
+                score = np.squeeze(row['Score'].values)
+
+                print(f'{feat}: {score}')
+
+        return chosen_features
 
 
 def perform_pca(normalized_array, class_cols, n_components=2):
