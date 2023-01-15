@@ -4,9 +4,24 @@ import numpy as np
 RESOURCE_DIR_NAME = 'resources'
 PROCESSED_DIR_NAME = 'feature_processing'
 FEATURES_FILE_NAME = 'features_df'
+LBP_PARAMS = [[1, 2, 3], 8, 'uniform']
+ZM_PARAMS = [[1, 2, 3, 4]]
+GLCM_PARAMS = [[1, 2, 3], [0, np.pi / 12, np.pi / 6, np.pi / 4,     # DEG: 0, 15, 30, 45
+                           np.pi / 3, np.pi * 5 / 12, np.pi / 2, np.pi * 7 / 12,    # DEG 60, 75, 90, 105
+                           np.pi * 2 / 3, np.pi * 3 / 4, np.pi * 5 / 6, np.pi * 11 / 12]]   # DEG 120, 135, 150, 165
+
 
 if __name__ == '__main__':
+    # Create class and load images by class from a given dir
     dataset_proc = ImageDatasetProcessing(RESOURCE_DIR_NAME)
+
+    # Generate LBP, Zernike Moments and Gray Level Co-occurance Matrix with given parameters for every image
+    dataset_proc.generate_features_for_dataset(LBP_PARAMS,
+                                               ZM_PARAMS,
+                                               GLCM_PARAMS,
+                                               verbose=True)
+
+    # Save a DataFrame containing all features to a csv file
     dataset_proc.save_features_to_csv(PROCESSED_DIR_NAME,
                                       FEATURES_FILE_NAME,
                                       verbose=True)
