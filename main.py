@@ -3,22 +3,25 @@ from image_dataset_processing import LBP_PARAMS, ZM_PARAMS, GLCM_PARAMS
 import numpy as np
 from feature_processing import FeatureProcessing
 
-RESOURCE_DIR_NAME = 'resources'
+RESOURCE_DIR_NAME = 'resources/test'
 PROCESSED_DIR_NAME = 'feature_processing'
 FEATURES_FILE_NAME = 'features_df'
 
 if __name__ == '__main__':
     # Create class and load images by class from a given dir
     dataset_proc = ImageDatasetProcessing(RESOURCE_DIR_NAME, verbose=True)
+    print('---------------------------------------------------------------')
 
     # Generate LBP, Zernike Moments and Gray Level Co-occurance Matrix with given parameters for every image
     dataset_proc.generate_features_for_dataset(LBP_PARAMS,
                                                ZM_PARAMS,
                                                GLCM_PARAMS)
+    print('---------------------------------------------------------------')
 
     # Save a DataFrame containing all features to a csv file
     filepath = dataset_proc.save_features_to_csv(PROCESSED_DIR_NAME,
                                                  FEATURES_FILE_NAME)
+    print('---------------------------------------------------------------')
 
     # filepath = 'feature_processing/features_df.csv'
 
@@ -27,6 +30,7 @@ if __name__ == '__main__':
 
     # Determine a given number of best features
     best_features = feature_proc.get_best_features(20)
+    print('---------------------------------------------------------------')
 
 
 
