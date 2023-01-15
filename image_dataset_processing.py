@@ -1,10 +1,18 @@
-import subprocess
 import os
+import subprocess
 
 import numpy as np
 import pandas as pd
 
 from mri_image import MriImage
+
+LBP_PARAMS = [[1, 2, 3], 8, 'uniform']
+ZM_PARAMS = [[1, 2, 3, 4]]
+GLCM_PARAMS = [[1, 2, 3],
+               [0, np.pi / 12, np.pi / 6, np.pi / 4,  # DEG: 0, 15, 30, 45
+                np.pi / 3, np.pi * 5 / 12, np.pi / 2, np.pi * 7 / 12,  # DEG: 60, 75, 90, 105
+                np.pi * 2 / 3, np.pi * 3 / 4, np.pi * 5 / 6, np.pi * 11 / 12]]  # DEG: 120, 135, 150, 165
+
 
 class ImageDatasetProcessing:
     # Processing process of an image dataset
@@ -35,7 +43,6 @@ class ImageDatasetProcessing:
 
         for c in self.images:
             for img in self.images[c][:5]:
-
                 lbp_out = img.generate_lbps(radius, n_points, method)
                 lbps_list.append(lbp_out)
 
@@ -59,7 +66,6 @@ class ImageDatasetProcessing:
 
         for c in self.images:
             for img in self.images[c][:5]:
-
                 zm_out = img.generate_zernike_moments(radius)
                 zm_list.append(zm_out)
 
@@ -74,7 +80,6 @@ class ImageDatasetProcessing:
 
         return zm_df
 
-
     # Generate Gray Level Co-occurance Matrices for all images
     def generate_glcm(self, distances, angles, levels=256,
                       symmetric=True, normed=True, verbose=False) -> pd.DataFrame:
@@ -85,7 +90,6 @@ class ImageDatasetProcessing:
 
         for c in self.images:
             for img in self.images[c][:5]:
-
                 glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
                 glcm_list.append(glcm_out)
 
@@ -101,6 +105,7 @@ class ImageDatasetProcessing:
         return glcm_df
 
     def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params, verbose=False):
+        classes = [c for c in self.images for _ in self.images[c][:5]]
 
         lbp = self.generate_lbps(lbp_params[0],
                                  lbp_params[1],
@@ -112,11 +117,10 @@ class ImageDatasetProcessing:
         zernike = self.generate_zernike_moments(zernike_params[0],
                                                 verbose=verbose)
 
-        features_df = lbp.join(glcm).join(zernike)
+        self.dataset_features = lbp.join(glcm).join(zernike)
 
-        classes = [c for c in self.images for _ in self.images[c][:5]]
         # noinspection PyTypeChecker
-        features_df.insert(0, 'Class', classes)
+        self.dataset_features.insert(0, 'Class', classes)
 
         return self.dataset_features
 
@@ -124,15 +128,16 @@ class ImageDatasetProcessing:
         feature_df = self.dataset_features
 
         if feature_df is None:
-           feature_df = self.generate_features_for_dataset(LBP_PARAMS,
-                                                           ZM_PARAMS,
-                                                           GLCM_PARAMS,
-                                                           verbose=verbose)
+            feature_df = self.generate_features_for_dataset(LBP_PARAMS,
+                                                            ZM_PARAMS,
+                                                            GLCM_PARAMS,
+                                                            verbose=verbose)
 
-        if not path.exists(path_to_dir):
+        if not os.path.exists(path_to_dir):
             subprocess.call(['mkdir', path_to_dir], shell=False)
 
         if file_name[-4:] != '.csv':
             file_name += '.csv'
 
+        print(f'Features saved to file {file_name} in {path_to_dir}')
         feature_df.to_csv(f'{path_to_dir}/{file_name}')
