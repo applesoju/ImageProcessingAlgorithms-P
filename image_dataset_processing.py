@@ -119,7 +119,7 @@ class ImageDatasetProcessing:
                                  lbp_params[2])
         print('---------------------------------------------------------------')
         glcm = self.generate_glcm(glcm_params[0],
-                                  glcm_params[1],)
+                                  glcm_params[1], )
         print('---------------------------------------------------------------')
         zernike = self.generate_zernike_moments(zernike_params[0])
 

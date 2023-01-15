@@ -1,7 +1,6 @@
+from feature_processing import FeatureProcessing
 from image_dataset_processing import ImageDatasetProcessing
 from image_dataset_processing import LBP_PARAMS, ZM_PARAMS, GLCM_PARAMS
-import numpy as np
-from feature_processing import FeatureProcessing
 
 RESOURCE_DIR_NAME = 'resources/test'
 PROCESSED_DIR_NAME = 'feature_processing'
@@ -31,10 +30,6 @@ if __name__ == '__main__':
     # Determine a given number of best features
     best_features = feature_proc.get_best_features(20)
     print('---------------------------------------------------------------')
-
-
-
-
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # norm_arr_mri = dfp.normalize_df(final_df, best_features)
