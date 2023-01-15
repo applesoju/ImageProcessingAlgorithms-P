@@ -62,7 +62,6 @@ class FeatureProcessing:
         result_df = pd.DataFrame()
         result_df['Feature_Name'] = fit_res.feature_names_in_
         result_df['Score'] = fit_res.scores_
-        result_df = result_df.sort_values(by=['Score'], ascending=False)
 
         self.feature_scores = result_df
 
@@ -77,26 +76,21 @@ class FeatureProcessing:
 
         return chosen_features
 
+    def perform_pca(self, features_to_consider, n_components):
+        if self.verbose:
+            print('Peforming Principal Component Analysis...')
 
-def perform_pca(normalized_array, class_cols, n_components=2):
-    pca_mri = PCA(n_components=n_components)
-    principal_component_mri = pca_mri.fit_transform(normalized_array)
+        pca = PCA(n_components=n_components)
+        feature_df = self.normalized_feature_df[features_to_consider]
+        feature_pca = pca.fit_transform(feature_df)
 
-    column_names = [f'princ_comp_{i + 1}' for i in range(n_components)]
-    pca_mri_df = pd.DataFrame(data=principal_component_mri, columns=column_names)
-    pca_mri_df['Class_Label'] = class_cols['Class_Label'].values.tolist()
-    pca_mri_df['Class_Name'] = class_cols['Class_Name'].values.tolist()
+        feature_pca_df = pd.DataFrame(feature_pca)
+        feature_pca_df.insert(0, 'Class', self.normalized_feature_df['Class'])
 
-    print('Explained variation per principal component: {}'.format(pca_mri.explained_variance_ratio_))
+        if self.verbose:
+            print(f'Explained variation per principal component: {pca.explained_variance_ratio_}')
 
-    if n_components == 2:
-        sn.scatterplot(x='princ_comp_1',
-                       y='princ_comp_2',
-                       hue='Class_Name',
-                       data=pca_mri_df)
-        plt.show()
-
-    return pca_mri_df
+        return feature_pca_df
 
 
 def multinomial_logistic_regression_cv(data_df):
