@@ -104,7 +104,7 @@ class ImageDatasetProcessing:
 
         return glcm_df
 
-    def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params, verbose=False):
+    def generate_features_for_dataset(self, lbp_params, zernike_params, glcm_params, verbose=False) -> pd.DataFrame:
         classes = [c for c in self.images for _ in self.images[c][:5]]
 
         lbp = self.generate_lbps(lbp_params[0],
@@ -124,7 +124,7 @@ class ImageDatasetProcessing:
 
         return self.dataset_features
 
-    def save_features_to_csv(self, path_to_dir, file_name, verbose=False):
+    def save_features_to_csv(self, path_to_dir, file_name, verbose=False) -> str:
         feature_df = self.dataset_features
 
         if feature_df is None:
@@ -140,4 +140,8 @@ class ImageDatasetProcessing:
             file_name += '.csv'
 
         print(f'Features saved to file {file_name} in {path_to_dir}')
-        feature_df.to_csv(f'{path_to_dir}/{file_name}')
+
+        path_to_file = f'{path_to_dir}/{file_name}'
+        feature_df.to_csv(path_to_file)
+
+        return path_to_file
