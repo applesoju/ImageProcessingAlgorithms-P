@@ -110,13 +110,10 @@ class ImageDatasetProcessing:
 
         lbp = self.generate_lbps(lbp_params[0],
                                  lbp_params[1],
-                                 lbp_params[2],
-                                 verbose=self.verbose)
+                                 lbp_params[2])
         glcm = self.generate_glcm(glcm_params[0],
-                                  glcm_params[1],
-                                  verbose=self.verbose)
-        zernike = self.generate_zernike_moments(zernike_params[0],
-                                                verbose=self.verbose)
+                                  glcm_params[1],)
+        zernike = self.generate_zernike_moments(zernike_params[0])
 
         self.dataset_features = lbp.join(glcm).join(zernike)
 
