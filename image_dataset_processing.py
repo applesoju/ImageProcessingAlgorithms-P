@@ -1,18 +1,10 @@
-import os
 import subprocess
-from os import path
+import os
 
 import numpy as np
 import pandas as pd
 
-import process_img as pimg
 from mri_image import MriImage
-
-LBP_PARAMS = [[1, 2, 3], 8, 'uniform']
-ZM_PARAMS = [[1, 2, 3, 4]]
-GLCM_PARAMS = [[1, 2, 3], [0, np.pi / 12, np.pi / 6, np.pi / 4,     # DEG: 0, 15, 30, 45
-                           np.pi / 3, np.pi * 5 / 12, np.pi / 2, np.pi * 7 / 12,    # DEG 60, 75, 90, 105
-                           np.pi * 2 / 3, np.pi * 3 / 4, np.pi * 5 / 6, np.pi * 11 / 12]]   # DEG 120, 135, 150, 165
 
 class ImageDatasetProcessing:
     # Processing process of an image dataset
@@ -24,7 +16,6 @@ class ImageDatasetProcessing:
         class_dirs = os.listdir(dir_path)
         for cdir in class_dirs:
             self.images[cdir] = []
-
 
             class_path = f'{dir_path}/{cdir}'
             file_list = os.listdir(class_path)
@@ -43,7 +34,7 @@ class ImageDatasetProcessing:
         lbps_list = []
 
         for c in self.images:
-            for img in self.images[c]:
+            for img in self.images[c][:5]:
 
                 lbp_out = img.generate_lbps(radius, n_points, method)
                 lbps_list.append(lbp_out)
@@ -67,7 +58,7 @@ class ImageDatasetProcessing:
         zm_list = []
 
         for c in self.images:
-            for img in self.images[c]:
+            for img in self.images[c][:5]:
 
                 zm_out = img.generate_zernike_moments(radius)
                 zm_list.append(zm_out)
@@ -93,7 +84,7 @@ class ImageDatasetProcessing:
         glcm_list = []
 
         for c in self.images:
-            for img in self.images[c]:
+            for img in self.images[c][:5]:
 
                 glcm_out = img.generate_glcm(distances, angles, levels, symmetric, normed)
                 glcm_list.append(glcm_out)
@@ -121,7 +112,11 @@ class ImageDatasetProcessing:
         zernike = self.generate_zernike_moments(zernike_params[0],
                                                 verbose=verbose)
 
-        self.dataset_features = lbp.join(glcm).join(zernike)
+        features_df = lbp.join(glcm).join(zernike)
+
+        classes = [c for c in self.images for _ in self.images[c][:5]]
+        # noinspection PyTypeChecker
+        features_df.insert(0, 'Class', classes)
 
         return self.dataset_features
 
