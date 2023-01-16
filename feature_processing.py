@@ -7,10 +7,24 @@ import seaborn as sn
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score, train_test_split
 from sklearn.preprocessing import LabelEncoder
+
+
+def get_max_acc(accs_dict):
+    max_accuracy = 0.0
+    best_acc_key = None
+
+    for key in accs_dict:
+        acc = accs_dict[key][0]
+
+        if acc > max_accuracy:
+            best_acc_key = key
+            max_accuracy = acc
+
+    return best_acc_key, max_accuracy
 
 
 class FeatureProcessing:
@@ -18,9 +32,13 @@ class FeatureProcessing:
     def __init__(self, df_or_csv, verbose=False):
         self.verbose = verbose
         self.feature_scores = None
+        self.norm_mean = None
+        self.norm_std = None
+        self.normalized_feature_df = None
         self.pca_model = None
         self.feature_pca_df = None
         self.best_logreg_model = None
+        self.best_dectree_model = None
         self.class_encoding = pd.DataFrame()
 
         if type(df_or_csv) is pd.DataFrame:
@@ -37,7 +55,12 @@ class FeatureProcessing:
 
     def normalize_columns(self):
         fdf = self.features_df.drop(['Class'], axis=1)
-        self.normalized_feature_df = (fdf - fdf.mean()) / fdf.std()
+
+        self.norm_mean = fdf.mean()
+        self.norm_std = fdf.std()
+
+        self.normalized_feature_df = (fdf - self.norm_mean) / self.norm_std
+        self.normalized_feature_df = self.normalized_feature_df.fillna(0)
         self.normalized_feature_df.insert(0, 'Class', self.features_df['Class'])
 
         return self.normalized_feature_df
@@ -82,7 +105,10 @@ class FeatureProcessing:
             print('Peforming Principal Component Analysis...')
 
         pca = PCA(n_components=n_components)
-        feature_df = self.features_df[features_to_consider]
+
+        norm_feat_df = self.normalize_columns()
+
+        feature_df = norm_feat_df[features_to_consider]
         feature_pca = pca.fit_transform(feature_df)
 
         self.feature_pca_df = pd.DataFrame(feature_pca)
@@ -95,14 +121,14 @@ class FeatureProcessing:
 
         return self.feature_pca_df
 
-    def get_best_model(self, x, y):
+    def get_best_logreg_model(self, x, y):
         if self.verbose:
-            print('Looking for the most accurate model...')
+            print('Looking for the most accurate Logistic Regression model...')
 
         accs_dict = {}
 
-        solvers = ['lbfgs', 'newton-cg', 'sag', 'saga']
-        c_vals = [0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.33, 0.5, 0.66, 0.75, 0.9]
+        solvers = ['newton-cg', 'sag', 'saga']
+        c_vals = [0.01, 0.05, 0.1, 0.25, 0.4, 0.6, 0.8, 0.9, 0.99]
 
         for solver in solvers:
             for c in c_vals:
@@ -119,15 +145,7 @@ class FeatureProcessing:
             if self.verbose:
                 print(f'Finished checking models with {solver} solver.')
 
-        max_accuracy = 0.0
-        best_acc_key = None
-
-        for key in accs_dict:
-            acc = accs_dict[key][0]
-
-            if acc > max_accuracy:
-                best_acc_key = key
-                max_accuracy = acc
+        best_acc_key, max_accuracy = get_max_acc(accs_dict)
 
         if self.verbose:
             s, c = best_acc_key.split('_')
@@ -139,8 +157,36 @@ class FeatureProcessing:
 
         return self.best_logreg_model
 
+    def get_best_dectree_model(self, x, y):
+        if self.verbose:
+            print('Looking for the most accurate Decision Tree model...')
 
-    def multinomial_logistic_regression(self, solver=None, c_val=None):
+        accs_dict = {}
+
+        crits = ['gini', 'entropy', 'log_loss']
+
+        for crit in crits:
+            model = DecisionTreeClassifier(criterion=crit)
+            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=100)
+            n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
+
+            accuracy = np.mean(n_scores)
+            accs_dict[crit] = [accuracy, model]
+
+            if self.verbose:
+                print(f'Finished checking models with {crit} criterion.')
+
+        best_acc_key, max_accuracy = get_max_acc(accs_dict)
+
+        if self.verbose:
+            print(f'Found a model with the best accuracy of {max_accuracy}. Model properties:\n'
+                  f'Criterion: {best_acc_key}\n')
+
+        self.best_dectree_model = accs_dict[best_acc_key][1]
+
+        return self.best_dectree_model
+
+    def get_class_enc_and_xy(self):
         self.class_encoding['Name'] = self.feature_pca_df['Class']
 
         label_enc = LabelEncoder()
@@ -149,8 +195,13 @@ class FeatureProcessing:
         x = self.feature_pca_df.drop(['Class'], axis=1)
         y = self.class_encoding['Label']
 
+        return x, y
+
+    def multinomial_logistic_regression(self, solver=None, c_val=None):
+        x, y = self.get_class_enc_and_xy()
+
         if solver is None and c_val is None:
-            model = self.get_best_model(x, y)
+            model = self.get_best_logreg_model(x, y)
 
         else:
             model = LogisticRegression(multi_class='multinomial',
@@ -175,8 +226,37 @@ class FeatureProcessing:
 
         return self.best_logreg_model
 
-    def prob_predict(self, features, features_to_consider):
-        only_features = features.drop(['Class'], axis=1)
+    def desicion_tree_classifier(self, criterion=None):
+        x, y = self.get_class_enc_and_xy()
+
+        if criterion is None:
+            model = self.get_best_dectree_model(x, y)
+
+        else:
+            model = DecisionTreeClassifier(criterion=criterion)
+            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=100)
+            n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
+
+            if self.verbose:
+                print(f'Mean accuracy from Cross Validation: {np.mean(n_scores):.3f}, {np.std(n_scores):.3f}')
+
+        print('Fitting the model...')
+
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=144)
+        model.fit(x_train, y_train)
+
+        score = model.score(x_test, y_test)
+        if self.verbose:
+            print(f'Score from prediction of test subset: {score}')
+
+        self.best_dectree_model = model
+
+        return self.best_dectree_model
+
+    def prob_predict(self, features, features_to_consider, model):
+        norm_features = (features - self.norm_mean) / self.norm_std
+        norm_features = norm_features.fillna(0)
+        only_features = norm_features.drop(['Class'], axis=1)
 
         class_names = self.class_encoding['Name'].unique()
         class_labels = self.class_encoding['Label'].unique()
@@ -192,7 +272,16 @@ class FeatureProcessing:
         best_features = only_features[features_to_consider]
         pca_only_feats = pca.transform(best_features)
 
-        pred = self.best_logreg_model.predict_proba(pca_only_feats).reshape(-1, 1)
+        if model == 'logreg':
+            chosen_model = self.best_logreg_model
+
+        elif model == 'dectree':
+            chosen_model = self.best_dectree_model
+
+        else:
+            raise ValueError(f'{model} is not a recognizable model.')
+
+        pred = chosen_model.predict_proba(pca_only_feats).reshape(-1, 1)
 
         if self.verbose:
             print(f'Predicted probabilities:')
