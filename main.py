@@ -3,7 +3,7 @@ from image_dataset_processing import ImageDatasetProcessing
 from image_dataset_processing import LBP_PARAMS, ZM_PARAMS, GLCM_PARAMS
 import cv2
 
-RESOURCE_DIR_NAME = 'resources/test'
+RESOURCE_DIR_NAME = 'resources/augmented'
 PROCESSED_DIR_NAME = 'feature_processing'
 FEATURES_FILE_NAME = 'features_df'
 
