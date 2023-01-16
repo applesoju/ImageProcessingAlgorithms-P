@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print('---------------------------------------------------------------')
 
     # Perform Multinomial Logistic Regression
-    logreg_model = feature_proc.multinomial_logistic_regression(solver='newton-cg', c_val=0.75)
+    logreg_model = feature_proc.multinomial_logistic_regression()
     print('---------------------------------------------------------------')
 
     idp = ImageDatasetProcessing()
