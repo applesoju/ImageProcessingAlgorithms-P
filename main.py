@@ -44,6 +44,12 @@ if __name__ == '__main__':
     idp = ImageDatasetProcessing()
 
     # Prediction
-    image_path = 'resources/test/MildDemented/26.jpg'
-    features = idp.process_image(image_path)
-    prediction = feature_proc.prob_predict(features, best_features)
+    image_paths = ['resources/augmented/MildDemented/799dd911-7abd-4dc6-b2f3-704a4b4eeee8.jpg',
+                   'resources/augmented/ModerateDemented/0585089e-4248-4686-980c-68bb722e048d.jpg',
+                   'resources/augmented/NonDemented/8172e7dc-7b83-4efe-bf40-9bc6ee2a0598.jpg',
+                   'resources/augmented/VeryMildDemented/49350611-e865-4f7b-8f14-c3e9f2eb8177.jpg']
+
+    for image_path in image_paths:
+        features = idp.process_image(image_path)
+        prediction = feature_proc.prob_predict(features, best_features)
+        print('---------------------------------------------------------------')
