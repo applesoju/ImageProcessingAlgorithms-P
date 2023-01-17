@@ -202,14 +202,14 @@ class FeatureProcessing:
         accs_dict = {}
 
         solvers = ['lbfgs', 'newton-cg', 'sag', 'saga']
-        c_vals = [0.01, 0.05, 0.1, 0.25, 0.4, 0.6, 0.8, 0.9, 0.99]
+        c_vals = [0.1, 0.25, 0.5, 0.75, 1]
 
         for solver in solvers:
             for c in c_vals:
                 model = LogisticRegression(multi_class='multinomial',
                                            solver=solver,
                                            C=c)
-                cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=100)
+                cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
                 n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
                 key = f'{solver}_{c}'
@@ -229,7 +229,7 @@ class FeatureProcessing:
 
         self.best_logreg_model = accs_dict[best_acc_key][1]
 
-        return self.best_logreg_model
+        return self.best_logreg_model, max_accuracy
 
     def get_best_dectree_model(self, x, y):
         if self.verbose:
@@ -241,7 +241,7 @@ class FeatureProcessing:
 
         for crit in crits:
             model = DecisionTreeClassifier(criterion=crit)
-            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=100)
+            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             accuracy = np.mean(n_scores)
@@ -258,7 +258,7 @@ class FeatureProcessing:
 
         self.best_dectree_model = accs_dict[best_acc_key][1]
 
-        return self.best_dectree_model
+        return self.best_dectree_model, max_accuracy
 
     def get_best_forest_model(self, x, y):
         if self.verbose:
@@ -270,7 +270,7 @@ class FeatureProcessing:
 
         for crit in crits:
             model = RandomForestClassifier(criterion=crit)
-            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=100)
+            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             accuracy = np.mean(n_scores)
@@ -287,7 +287,7 @@ class FeatureProcessing:
 
         self.best_forest_model = accs_dict[best_acc_key][1]
 
-        return self.best_forest_model
+        return self.best_forest_model, max_accuracy
 
     def get_class_enc_and_xy(self, reduce_dims=None):
         match reduce_dims:
@@ -333,7 +333,7 @@ class FeatureProcessing:
             model = LogisticRegression(multi_class='multinomial',
                                        solver=solver,
                                        C=c_val)
-            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=10)
+            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -360,7 +360,7 @@ class FeatureProcessing:
 
         else:
             model = DecisionTreeClassifier(criterion=criterion)
-            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=10)
+            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -387,7 +387,7 @@ class FeatureProcessing:
 
         else:
             model = RandomForestClassifier(criterion=criterion)
-            cv = RepeatedStratifiedKFold(n_splits=8, n_repeats=10)
+            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -406,10 +406,65 @@ class FeatureProcessing:
 
         return self.best_forest_model
 
-    def compare_models(self):
-        raise NotImplementedError
+    def find_best_model(self):
+        if self.verbose:
+            print('Looking for the most accurate model...')
+            print('---------------------------------------------------------------')
 
-    def prob_predict(self, features, features_to_consider, model):
+        pca = self.perform_pca(self.best_features, n_components=3)
+        print('---------------------------------------------------------------')
+        lda = self.perform_lda(self.best_features, n_components=3)
+        print('---------------------------------------------------------------')
+        ica = self.perform_ica(self.best_features, n_components=3)
+        print('---------------------------------------------------------------')
+        lle = self.perform_lle(self.best_features, n_components=3)
+        print('---------------------------------------------------------------')
+
+        model_performance_list = []
+
+        for i in ['pca', 'lda', 'ica', 'lle', 'None']:
+            if i == 'None':
+                x, y = self.get_class_enc_and_xy()
+
+            else:
+                x, y = self.get_class_enc_and_xy(reduce_dims=i)
+
+            logreg, lr_acc = self.get_best_logreg_model(x, y)
+            print('---------------------------------------------------------------')
+            dectree, dt_acc = self.get_best_dectree_model(x, y)
+            print('---------------------------------------------------------------')
+            forest, f_acc = self.get_best_forest_model(x, y)
+            print('---------------------------------------------------------------')
+
+            best_perf = max(lr_acc, dt_acc, f_acc)
+
+            if best_perf == lr_acc:
+                model_performance_list.append((logreg, lr_acc, 'logreg'))
+
+            elif best_perf == dt_acc:
+                model_performance_list.append((dectree, dt_acc, 'dectree'))
+
+            elif best_perf == f_acc:
+                model_performance_list.append((forest, f_acc, 'forest'))
+
+        max_acc = 0
+
+        for model in model_performance_list:
+            max_acc = max(max_acc, model[1])
+
+        for i, name in enumerate(['pca', 'lda', 'ica', 'lle']):
+            if max_acc == model_performance_list[i][1]:
+                rd_used = name
+                model_type = model_performance_list[i][2]
+
+                if self.verbose:
+                    print(f'Found the best performing model with {max_acc} accuracy.\n'
+                          f'Model properties: {rd_used}, {model_type}')
+
+                return model_performance_list[0]
+
+
+    def prob_predict(self, features, features_to_consider, model, red_dim):
         norm_features = (features - self.norm_mean) / self.norm_std
         norm_features = norm_features.fillna(0)
         only_features = norm_features.drop(['Class'], axis=1)
@@ -423,10 +478,30 @@ class FeatureProcessing:
             class_enc[i] = class_names[j]
             j += 1
 
-        # pca = self.pca_model
-
         best_features = only_features[features_to_consider]
-        # pca_only_feats = pca.transform(best_features)
+
+        match red_dim:
+            case None:
+                pass
+
+            case 'pca':
+                pca = self.pca_model
+                best_features = pca.transform(best_features)
+
+            case 'lda':
+                lda = self.lda_model
+                best_features = lda.transform(best_features)
+
+            case 'ica':
+                ica = self.ica_model
+                best_features = ica.transform(best_features)
+
+            case 'lle':
+                lle = self.lle_model
+                best_features = lle.transform(best_features)
+
+            case _:
+                raise ValueError(f'{reduce_dims} is not a valid parameter')
 
         match model:
             case 'logreg':
