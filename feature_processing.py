@@ -181,7 +181,7 @@ class FeatureProcessing:
 
     def perform_lle(self, features_to_consider, n_components):
         if self.verbose:
-            print('Peforming Locally linear Embedding...')
+            print('Peforming Locally Linear Embedding...')
 
         lle = LocallyLinearEmbedding(n_components=n_components)
 
@@ -189,7 +189,7 @@ class FeatureProcessing:
         feature_df = norm_feat_df[features_to_consider]
         feature_lle = lle.fit_transform(feature_df)
 
-        self.feature_lle_df = pd.DataFrame(feature_l)
+        self.feature_lle_df = pd.DataFrame(feature_lle)
         self.feature_lle_df.insert(0, 'Class', self.features_df['Class'])
         self.lle_model = lle
 
@@ -308,6 +308,10 @@ class FeatureProcessing:
                 self.class_encoding['Name'] = self.feature_ica_df['Class']
                 x = self.feature_ica_df.drop(['Class'], axis=1)
 
+            case 'lle':
+                self.class_encoding['Name'] = self.feature_lle_df['Class']
+                x = self.feature_lle_df.drop(['Class'], axis=1)
+
             case _:
                 raise ValueError(f'{reduce_dims} is not a valid parameter')
 
@@ -401,6 +405,9 @@ class FeatureProcessing:
         self.best_forest_model = model
 
         return self.best_forest_model
+
+    def compare_models(self):
+        raise NotImplementedError
 
     def prob_predict(self, features, features_to_consider, model):
         norm_features = (features - self.norm_mean) / self.norm_std
