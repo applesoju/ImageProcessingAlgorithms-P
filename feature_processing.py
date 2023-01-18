@@ -87,7 +87,7 @@ class FeatureProcessing:
         if self.verbose:
             print(f'Selecting {n_features} best features from a total number of {len(self.features_df.columns)}...')
 
-        fdf = self.features_df
+        fdf = self.normalize_columns()
 
         label_enc = LabelEncoder()
         class_col = fdf['Class']
@@ -124,9 +124,7 @@ class FeatureProcessing:
 
         pca = PCA(n_components=n_components)
 
-        norm_feat_df = self.normalize_columns()
-
-        feature_df = norm_feat_df[features_to_consider]
+        feature_df = self.normalized_feature_df[features_to_consider]
         feature_pca = pca.fit_transform(feature_df)
 
         self.feature_pca_df = pd.DataFrame(feature_pca)
@@ -145,12 +143,10 @@ class FeatureProcessing:
 
         lda = LinearDiscriminantAnalysis(n_components=n_components)
 
-        norm_feat_df = self.normalize_columns()
-
         label_enc = LabelEncoder()
         class_labels = label_enc.fit_transform(self.normalized_feature_df['Class'])
 
-        feature_df = norm_feat_df[features_to_consider]
+        feature_df = self.normalized_feature_df[features_to_consider]
         feature_lda = lda.fit(feature_df, class_labels).transform(feature_df)
 
         self.feature_lda_df = pd.DataFrame(feature_lda)
@@ -169,12 +165,11 @@ class FeatureProcessing:
 
         ica = FastICA(n_components=n_components)
 
-        norm_feat_df = self.normalize_columns()
-        feature_df = norm_feat_df[features_to_consider]
+        feature_df = self.normalized_feature_df[features_to_consider]
         feature_ica = ica.fit_transform(feature_df)
 
         self.feature_ica_df = pd.DataFrame(feature_ica)
-        self.feature_ica_df.insert(0, 'Class', self.features_df['Class'])
+        self.feature_ica_df.insert(0, 'Class', self.normalized_feature_df['Class'])
         self.ica_model = ica
 
         return self.feature_ica_df
@@ -185,12 +180,11 @@ class FeatureProcessing:
 
         lle = LocallyLinearEmbedding(n_components=n_components)
 
-        norm_feat_df = self.normalize_columns()
-        feature_df = norm_feat_df[features_to_consider]
+        feature_df = self.normalized_feature_df[features_to_consider]
         feature_lle = lle.fit_transform(feature_df)
 
         self.feature_lle_df = pd.DataFrame(feature_lle)
-        self.feature_lle_df.insert(0, 'Class', self.features_df['Class'])
+        self.feature_lle_df.insert(0, 'Class', self.normalized_feature_df['Class'])
         self.lle_model = lle
 
         return self.feature_ica_df
@@ -327,7 +321,7 @@ class FeatureProcessing:
         x, y = self.get_class_enc_and_xy(reduce_dims=red_dim)
 
         if solver is None and c_val is None:
-            model = self.get_best_logreg_model(x, y)
+            model, acc = self.get_best_logreg_model(x, y)
 
         else:
             model = LogisticRegression(multi_class='multinomial',
@@ -352,11 +346,11 @@ class FeatureProcessing:
 
         return self.best_logreg_model
 
-    def desicion_tree_classifier(self, criterion=None):
-        x, y = self.get_class_enc_and_xy()
+    def desicion_tree_classifier(self, criterion=None, red_dim=None):
+        x, y = self.get_class_enc_and_xy(reduce_dims=red_dim)
 
         if criterion is None:
-            model = self.get_best_dectree_model(x, y)
+            model, acc = self.get_best_dectree_model(x, y)
 
         else:
             model = DecisionTreeClassifier(criterion=criterion)
@@ -379,14 +373,14 @@ class FeatureProcessing:
 
         return self.best_dectree_model
 
-    def random_forest_classifier(self, criterion=None):
-        x, y = self.get_class_enc_and_xy()
+    def random_forest_classifier(self, criterion=None, red_dim=None, n_est=100):
+        x, y = self.get_class_enc_and_xy(reduce_dims=red_dim)
 
         if criterion is None:
-            model = self.get_best_forest_model(x, y)
+            model, acc = self.get_best_forest_model(x, y)
 
         else:
-            model = RandomForestClassifier(criterion=criterion)
+            model = RandomForestClassifier(criterion=criterion, n_estimators=n_est)
             cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
@@ -411,13 +405,13 @@ class FeatureProcessing:
             print('Looking for the most accurate model...')
             print('---------------------------------------------------------------')
 
-        pca = self.perform_pca(self.best_features, n_components=3)
+        self.perform_pca(self.best_features, n_components=3)
         print('---------------------------------------------------------------')
-        lda = self.perform_lda(self.best_features, n_components=3)
+        self.perform_lda(self.best_features, n_components=3)
         print('---------------------------------------------------------------')
-        ica = self.perform_ica(self.best_features, n_components=3)
+        self.perform_ica(self.best_features, n_components=3)
         print('---------------------------------------------------------------')
-        lle = self.perform_lle(self.best_features, n_components=3)
+        self.perform_lle(self.best_features, n_components=3)
         print('---------------------------------------------------------------')
 
         model_performance_list = []
@@ -464,10 +458,10 @@ class FeatureProcessing:
                 return model_performance_list[0]
 
 
-    def prob_predict(self, features, features_to_consider, model, red_dim):
-        norm_features = (features - self.norm_mean) / self.norm_std
-        norm_features = norm_features.fillna(0)
-        only_features = norm_features.drop(['Class'], axis=1)
+    def prob_predict(self, features, features_to_consider, model, red_dim=None):
+        if red_dim is not None:
+            norm_features = (features - self.norm_mean) / self.norm_std
+            features = norm_features.fillna(0)
 
         class_names = self.class_encoding['Name'].unique()
         class_labels = self.class_encoding['Label'].unique()
@@ -478,7 +472,7 @@ class FeatureProcessing:
             class_enc[i] = class_names[j]
             j += 1
 
-        best_features = only_features[features_to_consider]
+        best_features = features[features_to_consider]
 
         match red_dim:
             case None:
