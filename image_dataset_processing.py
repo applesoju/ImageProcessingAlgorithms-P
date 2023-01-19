@@ -9,9 +9,9 @@ from mri_image import MriImage
 LBP_PARAMS = [[1, 2, 3], 8, 'uniform']
 ZM_PARAMS = [[1, 2, 3, 4]]
 GLCM_PARAMS = [[1, 2, 3],
-               [0, np.pi / 8,   # DEG: 0, 22.5
-                np.pi / 4, np.pi * 3 / 8,   # DEG: 45, 67.5
-                np.pi / 2, np.pi * 5 / 8,   # DEG: 90, 112.5
+               [0, np.pi / 8,  # DEG: 0, 22.5
+                np.pi / 4, np.pi * 3 / 8,  # DEG: 45, 67.5
+                np.pi / 2, np.pi * 5 / 8,  # DEG: 90, 112.5
                 np.pi * 3 / 4, np.pi * 7 / 8]]  # DEG: 135, 157.5
 
 
@@ -184,4 +184,3 @@ class ImageDatasetProcessing:
         image_features.insert(0, 'Class', class_name)
 
         return image_features
-

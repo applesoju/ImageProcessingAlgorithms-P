@@ -1,18 +1,16 @@
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sn
 from sklearn.decomposition import PCA, FastICA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.manifold import LocallyLinearEmbedding
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score, train_test_split
 from sklearn.preprocessing import LabelEncoder
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.manifold import LocallyLinearEmbedding
+from sklearn.tree import DecisionTreeClassifier
 
 
 def get_max_acc(accs_dict):
@@ -203,7 +201,7 @@ class FeatureProcessing:
                 model = LogisticRegression(multi_class='multinomial',
                                            solver=solver,
                                            C=c)
-                cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+                cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
                 n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
                 key = f'{solver}_{c}'
@@ -235,7 +233,7 @@ class FeatureProcessing:
 
         for crit in crits:
             model = DecisionTreeClassifier(criterion=crit)
-            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             accuracy = np.mean(n_scores)
@@ -264,7 +262,7 @@ class FeatureProcessing:
 
         for crit in crits:
             model = RandomForestClassifier(criterion=crit)
-            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             accuracy = np.mean(n_scores)
@@ -309,7 +307,6 @@ class FeatureProcessing:
             case _:
                 raise ValueError(f'{reduce_dims} is not a valid parameter')
 
-
         label_enc = LabelEncoder()
         self.class_encoding['Label'] = label_enc.fit_transform(self.class_encoding['Name'])
 
@@ -327,7 +324,7 @@ class FeatureProcessing:
             model = LogisticRegression(multi_class='multinomial',
                                        solver=solver,
                                        C=c_val)
-            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -354,7 +351,7 @@ class FeatureProcessing:
 
         else:
             model = DecisionTreeClassifier(criterion=criterion)
-            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -381,7 +378,7 @@ class FeatureProcessing:
 
         else:
             model = RandomForestClassifier(criterion=criterion, n_estimators=n_est)
-            cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=5)
+            cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=5)
             n_scores = cross_val_score(model, x, y, scoring='accuracy', cv=cv, n_jobs=1)
 
             if self.verbose:
@@ -456,7 +453,6 @@ class FeatureProcessing:
                           f'Model properties: {rd_used}, {model_type}')
 
                 return model_performance_list[0]
-
 
     def prob_predict(self, features, features_to_consider, model, red_dim=None):
         if red_dim is not None:

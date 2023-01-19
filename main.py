@@ -1,7 +1,6 @@
 from feature_processing import FeatureProcessing
 from image_dataset_processing import ImageDatasetProcessing
 from image_dataset_processing import LBP_PARAMS, ZM_PARAMS, GLCM_PARAMS
-import cv2
 
 RESOURCE_DIR_NAME = 'resources/augmented'
 PROCESSED_DIR_NAME = 'feature_processing'
@@ -23,14 +22,14 @@ if __name__ == '__main__':
                                                  FEATURES_FILE_NAME)
     print('---------------------------------------------------------------')
 
-    # Use this variable if features were already determined
+    # # Use this variable if features were already determined
     # filepath = 'feature_processing/features_df.csv'
 
     # Create class and load a DataFrame containing features
     feature_proc = FeatureProcessing(filepath, verbose=True)
 
     # Determine a given number of best features
-    best_features = feature_proc.get_best_features(20)
+    best_features = feature_proc.get_best_features(10)
     print('---------------------------------------------------------------')
 
     # Perform Principal Component Analysis
@@ -45,16 +44,16 @@ if __name__ == '__main__':
     # Perform Linear Discrimination Analysis
     lle = feature_proc.perform_lle(best_features, n_components=3)
 
-    # print('---------------------------------------------------------------')
+    print('---------------------------------------------------------------')
 
     # Get model using Multinomial Logistic Regression
-    # logreg_model = feature_proc.multinomial_logistic_regression(solver='saga', c_val=0.9, red_dim='lle')
+    logreg_model = feature_proc.multinomial_logistic_regression(solver='sag', c_val=0.9)
 
     # Get model using Decision Tree Clasificator
-    # dectree_model = feature_proc.desicion_tree_classifier(criterion='entropy')
+    dectree_model = feature_proc.desicion_tree_classifier(criterion='entropy')
 
     # Get model using Random Forest Clasificator
-    # forest_model = feature_proc.random_forest_classifier(criterion='log_loss', n_est=10)
+    forest_model = feature_proc.random_forest_classifier(criterion='log_loss', n_est=100)
 
     # Check all combinations of models in search of the best one
     best_model = feature_proc.find_best_model()
